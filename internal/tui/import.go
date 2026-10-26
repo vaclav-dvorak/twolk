@@ -179,9 +179,13 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// isTyped reports a printable keystroke (a rune or a space).
+// isTyped reports a printable keystroke (a rune or a space). Alt is
+// deliberately allowed: on layouts that type "{", "}", "[", "]" or "@"
+// with AltGr (Czech, German, Polish...), Windows reports Ctrl+Right Alt,
+// and bubbletea delivers the character as runes WITH Alt set — exactly
+// the characters an export JSON is built from.
 func isTyped(msg tea.KeyMsg) bool {
-	return (msg.Type == tea.KeyRunes || msg.Type == tea.KeySpace) && !msg.Alt
+	return msg.Type == tea.KeyRunes || msg.Type == tea.KeySpace
 }
 
 // startsExport reports a typed "{" — the first character of an export

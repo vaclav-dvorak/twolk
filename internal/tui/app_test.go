@@ -2059,8 +2059,11 @@ func TestImportKeystrokePaste(t *testing.T) {
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // name field, focused
 	m = keys(t, m, "Testchar")
 
+	// AltGr layouts (Czech: "{" is AltGr+B) deliver brackets, braces
+	// and "@" with Alt set — v1.0.3 ignored those and the "n" of "name"
+	// still focused the name field
 	export := exportChunk1 + exportChunk2
-	m = keys(t, m, export)
+	m = altGrKeys(t, m, export)
 	if got := m.impName.Value(); got != "Testchar" {
 		t.Fatalf("name field took the export: %q", got)
 	}
@@ -2074,9 +2077,20 @@ func TestImportKeystrokePaste(t *testing.T) {
 		t.Fatalf("esc: buffer %q, step %d", m.pasted, m.impStep)
 	}
 
-	m = keys(t, m, export)
+	m = altGrKeys(t, m, export)
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
 	if m.mode != modeNormal || m.char == nil || m.char.Name != "Testchar" {
 		t.Fatalf("keystroke paste did not import: mode %v err %q", m.mode, m.errMsg)
 	}
+}
+
+// altGrKeys types s one rune per KeyMsg the way bubbletea's Windows
+// reader delivers it on an AltGr layout: brackets, braces and "@" come
+// with Alt set.
+func altGrKeys(t *testing.T, m Model, s string) Model {
+	t.Helper()
+	for _, r := range s {
+		m = drive(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}, Alt: strings.ContainsRune("{}[]@", r)})
+	}
+	return m
 }
