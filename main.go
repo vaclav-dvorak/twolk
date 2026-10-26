@@ -17,7 +17,14 @@ import (
 //go:embed tools/armory-export.js
 var armorySnippet string
 
+// version is stamped by the release build (goreleaser ldflags).
+var version = "dev"
+
 func main() {
+	if len(os.Args) > 1 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
+		fmt.Println("twolk", version)
+		return
+	}
 	cfg, err := config.Load()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "twolk:", err)
