@@ -117,9 +117,9 @@ Character data stays on your machine.
   [wowsims/wotlk](https://github.com/wowsims/wotlk) and
   [wowsims/cata](https://github.com/wowsims/cata) (MIT licensed),
   pinned to fixed commits and embedded under `internal/db/data/`.
-  Cataclysm hunter and druid stat weights were also checked by running
-  the WoWSims cata simulator. Warriors use the published WoWSims
-  weights for now. Thank you to the WoWSims team.
+  Cataclysm hunter, druid and warrior stat weights, trinket procs and
+  tier bonuses were checked by running the WoWSims cata simulator.
+  Thank you to the WoWSims team.
 - **[AzerothCore](https://github.com/azerothcore/azerothcore-wotlk)**
   and **[TrinityCore](https://github.com/TrinityCore/TrinityCore)**
   world databases supply vendor prices, recipe sources and 3.3.5 stat

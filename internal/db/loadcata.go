@@ -79,9 +79,47 @@ func LoadCata() (*Database, error) {
 			d.Effects[se.ItemID] = append(d.Effects[se.ItemID], se)
 		}
 	}
+	for id, b := range cataBespokeStacking {
+		for _, e := range d.Effects[id] {
+			if e.Kind == EffectProc {
+				e.MaxStacks = b.MaxStacks
+				e.Callback, e.ProcMask, e.Outcome = b.Callback, b.ProcMask, b.Outcome
+				if e.Cooldown == 0 {
+					e.Cooldown = b.Cooldown
+				}
+			}
+		}
+	}
 	d.pool = d.buildPool()
 	return d, nil
 }
+
+// cataBespokeStacking curates the stacking trinkets the sim writes as
+// hand-rolled item effects in sim/common/cata/other_effects.go (@ the
+// pin) rather than as StackingStatBonusEffect blocks, so
+// stat_bonus_stacking.go — and with it the loader above — never sees
+// their stack counts or triggers. Without them the dump's per-stack
+// bonus scored as ONE stack: Vessel of Acceleration's crit read 136 EP
+// on a fury warrior where the sim measures ~700 (session 47), because
+// it sits at 5 stacks nearly all fight. Normal and heroic ids alike.
+//
+// Left out on purpose: Apparatus of Khaz'goroth and Fury of Angerforge
+// (stacks that an on-use converts), Jaws of Defeat (cost reduction, no
+// stats) and Kiril, Fury of Beasts (a 15% proc OPENS a window in which
+// hits build stacks — neither proc model here describes that).
+var cataBespokeStacking = map[int]Effect{
+	68995: vesselStacks, 69167: vesselStacks, // Vessel of Acceleration
+	59514: heartStacks, 65110: heartStacks, // Heart of Ignacious
+	59354: jarStacks, 65029: jarStacks, // Jar of Ancient Remedies
+}
+
+var (
+	vesselStacks = Effect{MaxStacks: 5, Callback: "OnSpellHitDealt", ProcMask: "MeleeOrMeleeProc", Outcome: "Crit"}
+	heartStacks  = Effect{MaxStacks: 5, Callback: "OnSpellHitDealt", ProcMask: "SpellDamage", Outcome: "Landed",
+		Cooldown: 2 * time.Second}
+	jarStacks = Effect{MaxStacks: 5, Callback: "OnHealDealt", ProcMask: "SpellHealing", Outcome: "Landed",
+		Cooldown: 2 * time.Second}
+)
 
 // Consumable types in the cata dump's ConsumableType enum.
 const (

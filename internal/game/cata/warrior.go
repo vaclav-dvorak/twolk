@@ -1,30 +1,51 @@
 package cata
 
 import (
+	"time"
+
 	"github.com/vaclav-dvorak/twolk/internal/db"
 	"github.com/vaclav-dvorak/twolk/internal/score"
 )
 
 // Warrior profiles. Weights are the pinned sim's P3 presets
 // (ui/warrior/<spec>/presets.ts @ the pin, attack power = 1 — Arms
-// ships no P1 table, and the reference realm is in Firelands), adopted
-// as published: unlike the hunter and druid profiles, the fill-to-cap
-// stats are NOT yet measured against the headless sim, and neither is
-// EPPerDPS, so damage procs and tier bonuses stay unpriced (notes only)
-// until they are. See plan.md.
+// ships no P1 table, and the reference realm is in Firelands), with the
+// fill-to-cap stats MEASURED by direct DPS differences on the sim's own
+// P3 gear sets (session 47; tools/eptool-cata, 50k iterations, seed 101,
+// replicated on a disjoint seed range within ~2%). The presets sit AT
+// their caps, so each slope was taken with hit and expertise pushed
+// well below, and enters as a ratio to Strength — which reproduces the
+// table exactly (Strength/AP measures 2.205 against the published 2.21):
 //
-// Fury carries the sim's own hit breakpoints (ui/warrior/fury/sim.ts):
+//	Arms, hit 362..862: hit 1.53 × Strength, expertise 0.96 (381..681).
+//	Fury TG, hit 338..538: 1.40; white-only (1438..1738) 0.63; exp 0.91.
+//	Fury SMF, hit 368..568: 1.19; white-only (1468..1768) 0.54; exp 0.78.
+//
+// All above the published table (Arms hit 2.77, exp 1.75): unlike the
+// cata hunter, a warrior's published hit and expertise UNDER-state the
+// pre-cap value. One point of AP is 1.53 / 1.62 / 1.82 DPS (EPPerDPS
+// 0.652 / 0.616 / 0.550 — ~270 / ~245 / ~210 EP per 1% DPS), and the
+// presets land 1.48 / 1.67 / 2.02 melee attacks per second, glancing
+// blows included (ProcInterval).
+//
+// Fury's hit breakpoints are the sim's own (ui/warrior/fury/sim.ts):
 // the spec passive Precision (sim/warrior/fury/fury.go) adds 3% hit, so
 // gear needs only 5% to take yellow attacks to the 8% cap, and past it
-// dual-wield white swings keep gaining up to 27% total — 24% from gear —
-// at the sim's post-cap 1.23 per rating.
+// dual-wield white swings keep gaining up to 27% total — 24% from gear.
+// The sim prices that region at 1.23; measured, TG reads 1.38, SMF 1.19.
 var (
 	furyYellowCap = 5 * rules85.MeleeHitRatingPerPct  // 601 rating: 8% with Precision
 	furyWhiteCap  = 24 * rules85.MeleeHitRatingPerPct // 2883 rating: 27% with Precision
 	parryCap      = 56 * rulesExpertise               // 14%: a tank also fights parries
 )
 
-const furyWhiteHitEP = 1.23
+const (
+	armsHitEP, armsExpEP = 3.38, 2.12 // 1.53 / 0.96 × Strength 2.21
+	tgHitEP, tgExpEP     = 3.08, 2.02 // 1.40 / 0.91 × 2.21
+	tgWhiteHitEP         = 1.38       // 0.63 × 2.21
+	smfHitEP, smfExpEP   = 2.61, 1.71 // 1.19 / 0.78 × 2.2
+	smfWhiteHitEP        = 1.19       // 0.54 × 2.2
+)
 
 // Titan's Grip and Single-Minded Fury (wowsims ui/core/talents/trees/
 // warrior.json) decide which fury build the character plays.
@@ -58,31 +79,42 @@ func warriorWeights(str, agi, exp, hit, crit, haste, mastery float64) db.Stats {
 
 var armsProfile = &score.Profile{
 	Name: "Arms Warrior", Class: db.ClassWarrior, Tree: "Arms",
-	Weights:         warriorWeights(2.21, 1.12, 1.75, 2.77, 1.45, 0.68, 0.89),
+	// haste is MEASURED (1.07) where the preset publishes 0.68: the
+	// preset reads 1.05-1.08 on two disjoint seed ranges, and with the
+	// published value the trinket check below priced haste trinkets
+	// 14-19% low (Crushing Weight now lands within 1%)
+	Weights:         warriorWeights(2.21, 1.12, armsExpEP, armsHitEP, 1.45, 1.07, 0.89),
 	HitCap:          &score.HitCapSpec{Stat: db.MeleeHit, BasePct: 8},
 	Caps:            []score.StatCap{{Stat: db.Expertise, Cap: dodgeCap}},
 	WeaponDPSWeight: 9.22,
+	EPPerDPS:        0.652,
+	ProcInterval:    675 * time.Millisecond,
 	ArmorType:       db.ArmorPlate, WeaponTypes: armsWeapons, RangedTypes: warriorRanged,
 	Layouts: twoHandOnly,
 	Rules:   rules85,
 }
 
-// furyCaps: full value to the yellow cap, white-only value to the
-// dual-wield cap, nothing past it. No HitCap — the breakpoints already
-// carry Precision, and the flat 8% default must not be added on top.
-var furyCaps = []score.StatCap{
-	{Stat: db.MeleeHit, Cap: furyYellowCap, SoftWeight: furyWhiteHitEP},
-	{Stat: db.MeleeHit, Cap: furyWhiteCap},
-	{Stat: db.Expertise, Cap: dodgeCap},
+// furyCaps: full value to the yellow cap, the build's white-only value
+// to the dual-wield cap, nothing past it. No HitCap — the breakpoints
+// already carry Precision, and the flat 8% default must not be added on
+// top.
+func furyCaps(whiteHitEP float64) []score.StatCap {
+	return []score.StatCap{
+		{Stat: db.MeleeHit, Cap: furyYellowCap, SoftWeight: whiteHitEP},
+		{Stat: db.MeleeHit, Cap: furyWhiteCap},
+		{Stat: db.Expertise, Cap: dodgeCap},
+	}
 }
 
 // Weapon DPS: the sim prices main and off hand separately; the engine
 // takes one blended weight (see plan.md caveats), the mean of the two.
 var furyTGProfile = &score.Profile{
 	Name: "Fury Warrior (TG)", Class: db.ClassWarrior, Tree: "Fury", Role: "tg",
-	Weights:         warriorWeights(2.21, 1.14, 1.71, 2.66, 1.48, 1.19, 1.17),
-	Caps:            furyCaps,
+	Weights:         warriorWeights(2.21, 1.14, tgExpEP, tgHitEP, 1.48, 1.19, 1.17),
+	Caps:            furyCaps(tgWhiteHitEP),
 	WeaponDPSWeight: (3.77 + 1.6) / 2,
+	EPPerDPS:        0.616,
+	ProcInterval:    600 * time.Millisecond,
 	ArmorType:       db.ArmorPlate, WeaponTypes: furyWeapons, RangedTypes: warriorRanged,
 	Layouts: titanGripOrDW,
 	Rules:   rules85,
@@ -90,9 +122,11 @@ var furyTGProfile = &score.Profile{
 
 var furySMFProfile = &score.Profile{
 	Name: "Fury Warrior (SMF)", Class: db.ClassWarrior, Tree: "Fury", Role: "smf",
-	Weights:         warriorWeights(2.2, 1.07, 1.57, 2.46, 1.39, 1.19, 1.02),
-	Caps:            furyCaps,
+	Weights:         warriorWeights(2.2, 1.07, smfExpEP, smfHitEP, 1.39, 1.19, 1.02),
+	Caps:            furyCaps(smfWhiteHitEP),
 	WeaponDPSWeight: (3.49 + 1.71) / 2,
+	EPPerDPS:        0.550,
+	ProcInterval:    495 * time.Millisecond,
 	ArmorType:       db.ArmorPlate, WeaponTypes: furyWeapons, RangedTypes: warriorRanged,
 	Layouts: dualWieldOnly,
 	Rules:   rules85,
