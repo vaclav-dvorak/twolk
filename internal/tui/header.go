@@ -27,6 +27,10 @@ func (m Model) viewHeader() string {
 	}
 	head := nameStyle.Render(id) + "  " + dimStyle.Render(detail) + nameStyle.Render(spec)
 	switch {
+	case len(c.Equipment) == 0:
+		// added but never refreshed: a name and a realm, nothing else
+		head = nameStyle.Render(id) + "  " + dimStyle.Render("no gear yet — press ") +
+			helpKey.Render("r")
 	case m.scorer != nil:
 		set := wornOf(m.gearRows())
 		head += "  " + titleStyle.Render(fmt.Sprintf("score %.0f", m.scorer.SetScoreWorn(set)))

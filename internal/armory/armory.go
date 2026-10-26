@@ -87,7 +87,7 @@ func (f *flexInt) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Parse decodes an armory JSON export.
+// Parse decodes an armory JSON export, or a name-only placeholder.
 func Parse(raw []byte) (*Character, error) {
 	var doc struct {
 		Name      string `json:"name"`
@@ -123,8 +123,10 @@ func Parse(raw []byte) (*Character, error) {
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return nil, fmt.Errorf("parsing armory export: %w", err)
 	}
-	if doc.Name == "" || len(doc.Equipment) == 0 {
-		return nil, fmt.Errorf("not an armory export (need name and equipment)")
+	// a name alone is a placeholder: a character added but not yet
+	// refreshed (the refresh rejects exports without equipment)
+	if doc.Name == "" {
+		return nil, fmt.Errorf("not an armory export (no character name)")
 	}
 
 	c := &Character{

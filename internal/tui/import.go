@@ -15,8 +15,10 @@ import (
 	"github.com/vaclav-dvorak/twolk/internal/game"
 )
 
-// The import wizard (i) and refresh flow (r): realm select, optional
-// character name, paste or armory-API fetch.
+// Adding a character (i: realm, then name — stored as a name-only
+// placeholder) and refreshing it (r: armory-API fetch or pasted export,
+// the only way gear comes in). The refresh step has no text field, so
+// a paste can only ever be the export.
 
 // realmRow is one selectable line of the import wizard's first step.
 // The server picks the game version: importing onto a row makes its
@@ -67,13 +69,15 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	if msg.String() == "ctrl+c" {
 		return m, tea.Quit
 	}
+	if m.impRefresh {
+		return m.updateRefresh(msg)
+	}
 
-	// step 0: where does the character play
+	// adding, step 0: where does the character play
 	if m.impStep == 0 {
 		switch msg.String() {
 		case "esc":
 			m.mode = modeNormal
-			m.pasted, m.typedPaste = nil, false
 			m.errMsg = ""
 		case "up", "k":
 			if m.impCursor > 0 {
@@ -84,7 +88,6 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.impCursor++
 			}
 		case "enter", " ":
-			// a new character is coming: empty name, ready to type
 			m.impStep = 1
 			m.errMsg = ""
 			m.impName.SetValue("")
@@ -93,48 +96,105 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// step 1. While the name field is focused it owns every key —
-	// including paste (cmd+v pastes the name) and cursor movement;
-	// enter/esc/tab hand control back to the modal.
-	paste := m.importSelection().server.Import == game.ImportPaste
-	if m.impName.Focused() {
-		if paste && startsExport(msg) {
-			// the export arrived while the name was still being edited
-			// (no name contains "{")
-			m.impName.Blur()
-			return m.typedPasteKey(msg), nil
+	// adding, step 1: the name field owns every key but enter/esc
+	switch msg.Type {
+	case tea.KeyEsc:
+		m.impName.Blur()
+		m.impStep = 0
+		m.errMsg = ""
+		return m, nil
+	case tea.KeyEnter:
+		return m.addCharacter()
+	}
+	var cmd tea.Cmd
+	m.impName, cmd = m.impName.Update(msg)
+	return m, cmd
+}
+
+// addCharacter stores the named character on the selected realm — a
+// name-only placeholder until its first refresh brings the gear — and
+// goes straight into that refresh. A name already stored on the realm
+// is switched to instead, never overwritten.
+func (m Model) addCharacter() (tea.Model, tea.Cmd) {
+	sel := m.importSelection()
+	name := strings.TrimSpace(m.impName.Value())
+	if name == "" {
+		m.errMsg = "type the character name"
+		return m, nil
+	}
+	meta := config.StoredCharacter{Game: sel.game.Slug, Server: sel.server.Slug, Realm: sel.realm}
+	idx := -1
+	chars := m.storedChars()
+	for i, sc := range m.cfg.Chars {
+		if sc.Game == meta.Game && sc.Server == meta.Server && strings.EqualFold(sc.Realm, meta.Realm) &&
+			chars[i] != nil && strings.EqualFold(chars[i].Name, name) {
+			idx = i
+			break
 		}
-		switch msg.Type {
-		case tea.KeyEnter, tea.KeyEsc, tea.KeyTab:
-			m.impName.Blur()
+	}
+	if idx < 0 {
+		raw, _ := json.Marshal(map[string]string{"name": name, "realm": sel.realm})
+		if err := m.cfg.UpsertCharacter(raw, meta, -1); err != nil {
+			m.errMsg = err.Error()
 			return m, nil
 		}
-		var cmd tea.Cmd
-		m.impName, cmd = m.impName.Update(msg)
-		return m, cmd
+		idx = len(m.cfg.Chars) - 1
 	}
-	// blurred: paste lands in the export buffer; successive pastes
-	// append so terminals that split large pastes into chunks still
-	// work. (Fetch servers have no paste step — route to the name.)
-	if msg.Paste {
-		if m.importSelection().server.Import == game.ImportFetch {
-			cmd := m.impName.Focus()
-			m.impName, _ = m.impName.Update(msg)
-			return m, cmd
+	m.impName.Blur()
+	cmd := m.activateChar(idx)
+	m.errMsg = ""
+	next, refresh := m.startRefresh()
+	return next, tea.Batch(cmd, refresh)
+}
+
+// startRefresh opens the refresh step for the active character: its
+// name and realm are fixed, so the modal has no text field and a paste
+// can only be the export. Fetch servers start fetching at once.
+func (m Model) startRefresh() (Model, tea.Cmd) {
+	_, j, ok := m.homeRow()
+	if !ok {
+		return m, nil
+	}
+	m.mode = modeImport
+	m.impRefresh = true
+	m.impStep = 1
+	m.impCursor = j
+	m.impName.SetValue(m.char.Name)
+	m.pasted, m.typedPaste = nil, false
+	m.importNote = ""
+	if m.importSelection().server.Import == game.ImportFetch {
+		next, cmd := m.startFetch()
+		return next.(Model), cmd
+	}
+	return m, nil
+}
+
+// updateRefresh is the refresh step: fetch servers fetch, paste servers
+// take the export. Successive pastes append, so terminals that split a
+// large paste into chunks still work.
+func (m Model) updateRefresh(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.importSelection().server.Import == game.ImportFetch {
+		switch msg.String() {
+		case "esc":
+			m.mode = modeNormal
+			m.errMsg = ""
+		case "enter":
+			if !m.impFetching {
+				return m.startFetch()
+			}
 		}
+		return m, nil
+	}
+	if msg.Paste {
 		m.pasted = append(m.pasted, []byte(string(msg.Runes))...)
 		m.typedPaste = false
 		m.errMsg = ""
 		return m, nil
 	}
-	if m.importSelection().server.Import == game.ImportFetch {
-		return m.updateImportFetch(msg)
-	}
 	// Windows consoles have no bracketed paste: a paste arrives as one
 	// keystroke per character. A "{" opens the export and every rune
-	// after it is data, not a shortcut — otherwise the "n" of "name"
-	// focuses the name field and the rest of the export lands in it.
-	if paste && (startsExport(msg) || (m.typedPaste && isTyped(msg))) {
+	// after it is data, not a shortcut ("c" would clear, "y" copy).
+	if startsExport(msg) || (m.typedPaste && isTyped(msg)) {
 		return m.typedPasteKey(msg), nil
 	}
 	switch msg.String() {
@@ -145,17 +205,9 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.errMsg = ""
 			return m, nil
 		}
-		if m.impRefresh {
-			m.mode = modeNormal
-		}
-		m.impStep = 0
-		m.pasted, m.typedPaste = nil, false
+		m.mode = modeNormal
+		m.pasted = nil
 		m.errMsg = ""
-	case "n":
-		if m.impRefresh {
-			return m, nil // refresh is bound to the active character
-		}
-		return m, m.impName.Focus()
 	case "c":
 		m.pasted, m.typedPaste = nil, false
 		m.errMsg = ""
@@ -210,34 +262,6 @@ func (m Model) typedPasteKey(msg tea.KeyMsg) Model {
 	return m
 }
 
-// updateImportFetch is step 1 for ImportFetch servers: no paste, no
-// snippet — a named character is pulled straight from the armory API.
-func (m Model) updateImportFetch(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "esc":
-		if m.impRefresh {
-			m.mode = modeNormal
-		}
-		m.impStep = 0
-		m.errMsg = ""
-	case "n":
-		if m.impRefresh {
-			return m, nil // refresh is bound to the active character
-		}
-		return m, m.impName.Focus()
-	case "enter":
-		if m.impFetching {
-			return m, nil
-		}
-		if strings.TrimSpace(m.impName.Value()) == "" {
-			m.errMsg = "type the character name first"
-			return m, m.impName.Focus()
-		}
-		return m.startFetch()
-	}
-	return m, nil
-}
-
 // startFetch kicks off the armory-API fetch for the wizard's current
 // realm and name (callers guarantee a non-empty name).
 func (m Model) startFetch() (tea.Model, tea.Cmd) {
@@ -254,13 +278,23 @@ func (m Model) startFetch() (tea.Model, tea.Cmd) {
 }
 
 // saveImport validates the pending export (pasted or fetched) against
-// the wizard selection and stores it tagged with where the character
-// plays; the selected server's game module becomes the active one.
+// the character being refreshed and stores it in that character's
+// place; its realm's game module becomes the active one.
 func (m Model) saveImport() (tea.Model, tea.Cmd) {
 	sel := m.importSelection()
 	char, err := armory.Parse(m.pasted)
 	if err != nil {
 		m.errMsg = err.Error()
+		return m, nil
+	}
+	if len(char.Equipment) == 0 {
+		m.errMsg = "not an armory export (no equipment)"
+		return m, nil
+	}
+	// the export names its character — catch the wrong armory page
+	// before it overwrites someone else
+	if m.char != nil && !strings.EqualFold(char.Name, m.char.Name) {
+		m.errMsg = fmt.Sprintf("export is for %s, not %s", char.Name, m.char.Name)
 		return m, nil
 	}
 	// endgame only: weights, caps and the candidate pool all assume
@@ -270,26 +304,12 @@ func (m Model) saveImport() (tea.Model, tea.Cmd) {
 			char.Name, char.Level, sel.game.PlayerLevel)
 		return m, nil
 	}
-	// the export knows its realm — catch a mis-selected wizard row
-	// before the character is filed under the wrong home
 	if char.Realm != "" && !strings.EqualFold(char.Realm, sel.realm) {
 		m.errMsg = fmt.Sprintf("export is from realm %s, but %s is selected", char.Realm, sel.realm)
 		return m, nil
 	}
 	meta := config.StoredCharacter{Game: sel.game.Slug, Server: sel.server.Slug, Realm: sel.realm}
-	// re-importing the same character replaces its entry; a new
-	// name (or the same name elsewhere) is added as another character
-	idx := -1
-	for i, sc := range m.cfg.Chars {
-		if sc.Game != meta.Game || sc.Server != meta.Server || sc.Realm != meta.Realm {
-			continue
-		}
-		if old, err := armory.Parse(sc.Raw()); err == nil && old.Name == char.Name {
-			idx = i
-			break
-		}
-	}
-	if err := m.cfg.UpsertCharacter(m.pasted, meta, idx); err != nil {
+	if err := m.cfg.UpsertCharacter(m.pasted, meta, m.cfg.ActiveChar); err != nil {
 		m.errMsg = err.Error()
 		return m, nil
 	}
@@ -316,11 +336,9 @@ func (m Model) saveImport() (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// realmImported renders the wizard's "on this realm" block: the
-// characters stored for the SELECTED realm are the only ones a save
-// can update, so they are what step 1 mentions — the active character
-// is irrelevant when it lives elsewhere (importing onto a foreign
-// realm is a fresh import and shows nothing).
+// realmImported renders the add step's "on this realm" line: the
+// characters already stored on the SELECTED realm (typing one of their
+// names switches to it instead of adding a duplicate).
 func (m Model) realmImported(sel realmRow) []string {
 	chars := m.storedChars()
 	var names []string
@@ -343,12 +361,7 @@ func (m Model) realmImported(sel realmRow) []string {
 	if len(names) == 0 {
 		return nil
 	}
-	return []string{
-		dimStyle.Render("on this realm: ") + strings.Join(names, dimStyle.Render(", ")),
-		dimStyle.Render("re-importing one of these names updates it — any other"),
-		dimStyle.Render("name is added as a new character"),
-		"",
-	}
+	return []string{dimStyle.Render("on this realm: ") + strings.Join(names, dimStyle.Render(", "))}
 }
 
 func (m Model) viewImport() string {
@@ -359,14 +372,16 @@ func (m Model) viewImport() string {
 	accent := lipgloss.Color(m.importSelection().game.Accent)
 	title := titleStyle.Foreground(accent)
 	key := helpKey.Foreground(accent)
-	header := title.Render("Import character")
+	header := title.Render("Add character")
 	if m.impRefresh {
 		header = title.Render("Refresh character")
 	}
 
+	sel := m.importSelection()
+	home := dimStyle.Render(sel.server.Name+" — "+sel.realm) + dimStyle.Render("  ·  "+sel.game.Name)
 	var content, footer string
 	switch {
-	case m.impStep == 0:
+	case !m.impRefresh && m.impStep == 0:
 		rows := m.realmRows()
 		// one aligned column of homes, each tagged with its game's
 		// flavor in the expansion's signature color
@@ -387,72 +402,44 @@ func (m Model) viewImport() string {
 		footer = key.Render("enter") + helpDesc.Render(" continue  ") +
 			key.Render("esc") + helpDesc.Render(" cancel")
 
-	case m.importSelection().server.Import == game.ImportFetch:
-		sel := m.importSelection()
-		nameLine := dimStyle.Render("character name: ")
-		switch {
-		case m.impName.Focused():
-			nameLine += m.impName.View()
-		case m.impName.Value() == "":
-			nameLine += dimStyle.Render("— none — press ") + key.Render("n")
-		default:
-			nameLine += m.impName.Value()
-		}
-		lines := []string{
-			dimStyle.Render(sel.server.Name+" — "+sel.realm) + dimStyle.Render("  ·  "+sel.game.Name),
-			nameLine,
-			"",
-		}
-		if !m.impRefresh { // a refresh IS one of these — nothing to say
-			lines = append(lines, m.realmImported(sel)...)
-		}
-		lines = append(lines,
+	case !m.impRefresh:
+		lines := []string{home, dimStyle.Render("character name: ") + m.impName.View(), ""}
+		lines = append(lines, m.realmImported(sel)...)
+		content = strings.Join(lines, "\n")
+		footer = key.Render("enter") + helpDesc.Render(" save  ") +
+			key.Render("esc") + helpDesc.Render(" back")
+
+	case sel.server.Import == game.ImportFetch:
+		lines := []string{home, dimStyle.Render("character: ") + m.char.Name, "",
 			title.Render("fetch from the armory:"),
-			dimStyle.Render(" enter pulls the character straight from "+sel.server.Name))
+			dimStyle.Render(" enter pulls the character straight from " + sel.server.Name)}
 		if m.impFetching {
-			lines = append(lines, "", key.Render(m.spin.View()+"fetching "+m.impName.Value()+" @ "+sel.realm))
+			lines = append(lines, "", key.Render(m.spin.View()+"fetching "+m.char.Name+" @ "+sel.realm))
+			footer = key.Render(m.spin.View()) + helpDesc.Render("fetching  ") +
+				key.Render("esc") + helpDesc.Render(" cancel")
+		} else {
+			footer = key.Render("enter") + helpDesc.Render(" fetch  ") +
+				key.Render("esc") + helpDesc.Render(" cancel")
 		}
 		content = strings.Join(lines, "\n")
 
 	case len(m.pasted) == 0:
-		sel := m.importSelection()
-		nameLine := dimStyle.Render("character name: ")
-		switch {
-		case m.impName.Focused():
-			nameLine += m.impName.View()
-		case m.impName.Value() == "":
-			nameLine += dimStyle.Render("— none —")
-		default:
-			nameLine += m.impName.Value()
-		}
-		lines := []string{
-			dimStyle.Render(sel.server.Name+" — "+sel.realm) + dimStyle.Render("  ·  "+sel.game.Name),
-			nameLine,
-			"",
-		}
-		if !m.impRefresh { // a refresh IS one of these — nothing to say
-			lines = append(lines, m.realmImported(sel)...)
-		}
 		// styled spans must not cross line breaks: lipgloss pads every
 		// line of a multi-line Render to the block width, which would
 		// push the inline key hint to the right
-		lines = append(lines,
+		lines := []string{home, dimStyle.Render("character: ") + m.char.Name, "",
 			title.Render("export the character:"),
 			dimStyle.Render(" 1. open your character's armory page in the browser"),
-			dimStyle.Render("    (it passes the site's bot check)"))
-		if m.impName.Value() != "" {
-			lines = append(lines, dimStyle.Render("    "+sel.server.PageURL(sel.realm, m.impName.Value())))
-		} else {
-			lines = append(lines, dimStyle.Render("    (")+key.Render("n")+
-				dimStyle.Render(" type the name to get the exact link)"))
-		}
-		lines = append(lines,
-			dimStyle.Render(" 2. press ")+key.Render("y")+dimStyle.Render(" here to copy the export snippet"),
+			dimStyle.Render("    (it passes the site's bot check)"),
+			dimStyle.Render("    " + sel.server.PageURL(sel.realm, m.char.Name)),
+			dimStyle.Render(" 2. press ") + key.Render("y") + dimStyle.Render(" here to copy the export snippet"),
 			dimStyle.Render(" 3. open the browser devtools console (F12 / cmd+opt+J),"),
 			dimStyle.Render("    paste the snippet, press enter — the export JSON"),
 			dimStyle.Render("    is placed on your clipboard"),
-			dimStyle.Render(" 4. come back here and paste (cmd/ctrl+v)"))
+			dimStyle.Render(" 4. come back here and paste (cmd/ctrl+v)")}
 		content = strings.Join(lines, "\n")
+		footer = key.Render("y") + helpDesc.Render(" copy browser snippet  ") +
+			key.Render("esc") + helpDesc.Render(" cancel")
 
 	default:
 		validity := okStyle.Render("✓ valid JSON")
@@ -461,34 +448,9 @@ func (m Model) viewImport() string {
 		}
 		content = fmt.Sprintf("%d bytes pasted  %s\n\n%s",
 			len(m.pasted), validity, dimStyle.Render(preview(m.pasted, 3, 60)))
-	}
-
-	if m.impStep == 1 {
-		fetch := m.importSelection().server.Import == game.ImportFetch
-		// import goes BACK to the realm list; refresh has no realm list
-		back := key.Render("esc") + helpDesc.Render(" back")
-		nameKey := key.Render("n") + helpDesc.Render(" name  ")
-		if m.impRefresh {
-			back = key.Render("esc") + helpDesc.Render(" cancel")
-			nameKey = ""
-		}
-		switch {
-		case m.impFetching:
-			footer = key.Render(m.spin.View()) + helpDesc.Render("fetching  ") + back
-		case m.impName.Focused() && fetch:
-			footer = key.Render("enter") + helpDesc.Render(" done typing")
-		case m.impName.Focused():
-			footer = key.Render("enter") + helpDesc.Render(" done typing  ") +
-				key.Render("paste") + helpDesc.Render(" export")
-		case fetch:
-			footer = key.Render("enter") + helpDesc.Render(" fetch  ") + nameKey + back
-		case len(m.pasted) > 0:
-			footer = key.Render("enter") + helpDesc.Render(" save  ") +
-				key.Render("c") + helpDesc.Render(" clear paste  ") + back
-		default:
-			footer = nameKey +
-				key.Render("y") + helpDesc.Render(" copy browser snippet  ") + back
-		}
+		footer = key.Render("enter") + helpDesc.Render(" save  ") +
+			key.Render("c") + helpDesc.Render(" clear paste  ") +
+			key.Render("esc") + helpDesc.Render(" cancel")
 	}
 	if m.importNote != "" {
 		footer = okStyle.Render(m.importNote) + "\n\n" + footer

@@ -138,15 +138,22 @@ func paste(t *testing.T, m Model, s string) Model {
 	return drive(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(s), Paste: true})
 }
 
-// openImport walks the import wizard to the paste step with the
-// fixture realm (Warmane — Icecrown) selected and the name skipped.
+// openImport adds the fixture character (Testchar on Warmane —
+// Icecrown) and lands on its refresh step, ready for the export paste.
 func openImport(t *testing.T, m Model) Model {
 	t.Helper()
+	return addChar(t, m, 1, "Testchar")
+}
+
+// addChar walks the add flow — realm row, name, enter — which stores a
+// placeholder and opens its refresh step.
+func addChar(t *testing.T, m Model, row int, name string) Model {
+	t.Helper()
 	m = keys(t, m, "i")
-	m.impCursor = 1 // Warmane — Icecrown
-	m.impName.SetValue("")
+	m.impCursor = row
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // continue
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // skip the name field
+	m = keys(t, m, name)
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // save
 	return m
 }
 
@@ -174,9 +181,14 @@ func TestImportFlow(t *testing.T) {
 	}
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyDown}) // Warmane — Icecrown
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // skip the name field
+	m = keys(t, m, "Testchar")
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // save the placeholder
+	if !m.impRefresh || m.char == nil || m.char.Name != "Testchar" || len(m.cfg.Chars) != 1 {
+		t.Fatalf("add did not store the placeholder and open its refresh: refresh=%v char=%+v",
+			m.impRefresh, m.char)
+	}
 
-	// typed characters are ignored — the paste step is paste-only
+	// typed characters are ignored — the refresh step is paste-only
 	m = keys(t, m, "hello")
 	if len(m.pasted) != 0 {
 		t.Fatalf("typing must not enter content, got %q", m.pasted)
@@ -859,8 +871,8 @@ func TestCharacterSwitcher(t *testing.T) {
 	m = drive(t, m, tea.WindowSizeMsg{Width: 140, Height: 40})
 	m = drive(t, m, dbLoadedMsg{slug: "wotlk", db: testDB()})
 
-	importChar := func(m Model, json string) Model {
-		m = openImport(t, m)
+	importChar := func(m Model, name, json string) Model {
+		m = addChar(t, m, 1, name)
 		m = paste(t, m, json)
 		return drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
 	}
@@ -868,8 +880,8 @@ func TestCharacterSwitcher(t *testing.T) {
 	mage := `{"name":"Frosty","realm":"Icecrown","level":"80","class":"Mage","race":"Gnome","faction":"Alliance",` +
 		`"equipment":[{"name":"X","item":"45820"}],"talents":[{"tree":"Frost","points":[0,0,71]}]}`
 
-	m = importChar(m, hunter)
-	m = importChar(m, mage)
+	m = importChar(m, "Testchar", hunter)
+	m = importChar(m, "Frosty", mage)
 	if got := len(m.cfg.Characters()); got != 2 {
 		t.Fatalf("stored characters = %d, want 2", got)
 	}
@@ -877,8 +889,9 @@ func TestCharacterSwitcher(t *testing.T) {
 		t.Fatalf("latest import should be active, got %s", m.char.Name)
 	}
 
-	// re-importing an existing character replaces, not duplicates
-	m = importChar(m, hunter)
+	// adding an existing name switches to it, and its refresh replaces
+	// the stored export rather than duplicating it
+	m = importChar(m, "testchar", hunter)
 	if got := len(m.cfg.Characters()); got != 2 {
 		t.Fatalf("re-import duplicated: %d chars", got)
 	}
@@ -1547,8 +1560,9 @@ func TestImportRejectsNonMaxLevel(t *testing.T) {
 	if !strings.Contains(m.errMsg, "level 74") || !strings.Contains(m.errMsg, "level 80") {
 		t.Fatalf("unexpected error message: %q", m.errMsg)
 	}
-	if len(m.cfg.Characters()) != 0 {
-		t.Fatal("refused character must not be stored")
+	// the placeholder from the add step stays; the refused gear does not
+	if chars := m.storedChars(); len(chars) != 1 || len(chars[0].Equipment) != 0 {
+		t.Fatal("refused export must not be stored")
 	}
 }
 
@@ -1665,7 +1679,7 @@ func TestTalentReachabilityClamp(t *testing.T) {
 
 	// same class, zero Marksmanship points: the shared per-class config
 	// value must clamp to 0 at read time for THIS character
-	m = openImport(t, m)
+	m = addChar(t, m, 1, "Otherchar")
 	none := strings.Replace(exportChunk1+exportChunk2, `"points":[0,15,56]`, `"points":[0,0,71]`, 1)
 	none = strings.Replace(none, `"name":"Testchar"`, `"name":"Otherchar"`, 1)
 	m = paste(t, m, none)
@@ -2044,9 +2058,9 @@ func TestStrongestPerSlot(t *testing.T) {
 
 // TestImportKeystrokePaste: Windows consoles deliver a paste as one
 // keystroke per character (bubbletea's coninput reader never sets
-// Paste). The export must still land in the buffer — even with the name
-// field focused, and with letters that are shortcuts on this step (the
-// "n" of "name" used to focus the name field and swallow the rest).
+// Paste). The refresh step has no text field, but its shortcuts ("c"
+// clears, "y" copies) appear inside every export — once a "{" opens the
+// buffer, everything after it is data.
 func TestImportKeystrokePaste(t *testing.T) {
 	t.Setenv("HOME", t.TempDir())
 	cfg, err := config.Load()
@@ -2054,19 +2068,12 @@ func TestImportKeystrokePaste(t *testing.T) {
 		t.Fatal(err)
 	}
 	m := drive(t, New(cfg), tea.WindowSizeMsg{Width: 120, Height: 40})
-	m = keys(t, m, "i")
-	m.impCursor = 1                                 // Warmane — Icecrown
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // name field, focused
-	m = keys(t, m, "Testchar")
+	m = openImport(t, m) // Testchar's refresh step
 
 	// AltGr layouts (Czech: "{" is AltGr+B) deliver brackets, braces
-	// and "@" with Alt set — v1.0.3 ignored those and the "n" of "name"
-	// still focused the name field
+	// and "@" with Alt set — v1.0.3 ignored those
 	export := exportChunk1 + exportChunk2
 	m = altGrKeys(t, m, export)
-	if got := m.impName.Value(); got != "Testchar" {
-		t.Fatalf("name field took the export: %q", got)
-	}
 	if string(m.pasted) != export {
 		t.Fatalf("buffer = %q, want the export", m.pasted)
 	}
@@ -2093,4 +2100,35 @@ func altGrKeys(t *testing.T, m Model, s string) Model {
 		m = drive(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}, Alt: strings.ContainsRune("{}[]@", r)})
 	}
 	return m
+}
+
+// TestAddCharacterPlaceholder: adding stores a name-only placeholder that
+// survives leaving its refresh; the main screen says how to get the gear,
+// and a refresh refuses an export for somebody else.
+func TestAddCharacterPlaceholder(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := drive(t, New(cfg), tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = openImport(t, m)
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc}) // skip the refresh for now
+	if m.mode != modeNormal || m.char == nil || len(m.char.Equipment) != 0 {
+		t.Fatalf("placeholder not active after esc: mode %v char %+v", m.mode, m.char)
+	}
+	if v := ansi.Strip(m.View()); !strings.Contains(v, "Testchar @ Icecrown") || !strings.Contains(v, "no gear yet") {
+		t.Fatalf("placeholder screen missing its hint:\n%s", v)
+	}
+
+	m = keys(t, m, "r")
+	other := strings.Replace(exportChunk1, `"name":"Testchar"`, `"name":"Otherchar"`, 1) + exportChunk2
+	m = paste(t, m, other)
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
+	if m.mode != modeImport || !strings.Contains(m.errMsg, "export is for Otherchar") {
+		t.Fatalf("foreign export accepted: mode %v err %q", m.mode, m.errMsg)
+	}
+	if chars := m.storedChars(); len(chars) != 1 || chars[0].Name != "Testchar" || len(chars[0].Equipment) != 0 {
+		t.Fatal("refused export overwrote the placeholder")
+	}
 }

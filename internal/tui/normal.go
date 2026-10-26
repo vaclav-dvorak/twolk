@@ -11,7 +11,6 @@ import (
 
 	"github.com/vaclav-dvorak/twolk/internal/armory"
 	"github.com/vaclav-dvorak/twolk/internal/db"
-	"github.com/vaclav-dvorak/twolk/internal/game"
 	"github.com/vaclav-dvorak/twolk/internal/score"
 )
 
@@ -33,8 +32,8 @@ func (m Model) updateNormal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "i":
-		// import is always a NEW character; refreshing the current one
-		// is its own flow (r)
+		// adding a character (realm + name) is its own flow; the gear
+		// always comes in through the refresh (r) it opens
 		m.mode = modeImport
 		m.impRefresh = false
 		m.pasted, m.typedPaste = nil, false
@@ -48,23 +47,11 @@ func (m Model) updateNormal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "r":
-		row, j, ok := m.homeRow()
-		if !ok {
+		if m.char == nil {
 			return m, nil
 		}
-		m.mode = modeImport
-		m.impRefresh = true
-		m.pasted, m.typedPaste = nil, false
 		m.errMsg = ""
-		m.importNote = ""
-		m.impStep = 1
-		m.impCursor = j
-		m.impName.SetValue(m.char.Name)
-		m.impName.Blur()
-		if row.server.Import == game.ImportFetch {
-			return m.startFetch() // one keystroke: the fetch starts now
-		}
-		return m, nil
+		return m.startRefresh()
 	case "f":
 		m.mode = modeFilter
 		m.fromUps, m.fromBis = false, false
@@ -134,6 +121,9 @@ func (m Model) viewNormal() string {
 		}
 		sections = sections[:0]
 		sections = append(sections, m.viewHeader(), statusLine)
+		if len(m.char.Equipment) == 0 {
+			break // a placeholder: the header says what to do
+		}
 		sections = append(sections, m.viewGear())
 		// give the tips pane only the rows left between the gear panes
 		// and the bottom help line, so it can't push help off screen
@@ -173,7 +163,7 @@ func (m Model) viewNormal() string {
 		helpKey.Render("o") + helpDesc.Render(" optimize  ") +
 		helpKey.Render("b") + helpDesc.Render(" bis  ") +
 		helpKey.Render("p") + helpDesc.Render(" emblems  ") +
-		helpKey.Render("i") + helpDesc.Render(" import  ") +
+		helpKey.Render("i") + helpDesc.Render(" add  ") +
 		refreshHelp +
 		helpKey.Render("c") + helpDesc.Render(" chars  ") +
 		helpKey.Render("q") + helpDesc.Render(" quit")

@@ -156,7 +156,7 @@ func (m Model) viewChars() string {
 		lines = append(lines, dimStyle.Render("no characters — import one with i"))
 	}
 
-	footer := helpLine("enter", "switch", "d", "delete", "i", "import new (from main screen)", "esc", "close")
+	footer := helpLine("enter", "switch", "d", "delete", "i", "add (from main screen)", "esc", "close")
 	modal := modalStyle.Render(lipgloss.JoinVertical(lipgloss.Left,
 		header, "", strings.Join(lines, "\n"), "", footer))
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, modal)

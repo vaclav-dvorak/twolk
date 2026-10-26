@@ -51,26 +51,21 @@ func TestCataFetchImport(t *testing.T) {
 		t.Fatalf("whitemane not offered: %+v", rows)
 	}
 	m.impCursor = whitemane
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // continue to step 1
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // continue to the name
+
+	// name is required: enter without one stores nothing
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
+	if m.errMsg == "" || len(m.cfg.Chars) != 0 {
+		t.Fatal("empty name must not add a character")
+	}
+	m = keys(t, m, "Zulja")
+	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter}) // save → refresh → fetch
+	m = next.(Model)
+	if cmd == nil || !m.impFetching || !m.impRefresh {
+		t.Fatal("adding a fetch-server character must start its fetch at once")
+	}
 	if !strings.Contains(m.View(), "fetch from the armory") {
 		t.Fatal("fetch step not shown for an ImportFetch server")
-	}
-
-	// name is required: entering without one must not fetch (it
-	// refocuses the field and complains instead)
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // leave name focus
-	next, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	m = next.(Model)
-	if m.impFetching || m.errMsg == "" || !m.impName.Focused() {
-		t.Fatal("empty name must not start a fetch")
-	}
-	_ = cmd // the returned command is the field's cursor blink, not a fetch
-	m = keys(t, m, "Zulja")
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // done typing
-	next, cmd = m.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	m = next.(Model)
-	if cmd == nil || !m.impFetching {
-		t.Fatal("enter with a name must start the fetch")
 	}
 
 	// the fetch lands (network bypassed; cata.FetchRaw has its own tests)
@@ -158,8 +153,8 @@ func TestImportAndRefresh(t *testing.T) {
 	if sel := m.importSelection(); sel.server.Slug != "whitemane" {
 		t.Fatalf("home realm not preselected: %+v", sel)
 	}
-	// import is a new character everywhere — even on the home realm the
-	// name starts empty and focused; the realm's own imports are listed
+	// adding starts with an empty, focused name even on the home realm;
+	// the realm's stored characters are listed
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
 	if m.impName.Value() != "" || !m.impName.Focused() {
 		t.Fatalf("import: name %q focused=%v, want empty focused",
@@ -169,15 +164,13 @@ func TestImportAndRefresh(t *testing.T) {
 		t.Error("home realm step 1 missing the realm's imported characters")
 	}
 	// a realm with no stored characters mentions none of them
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc}) // blur name
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc}) // back to realm list
 	m.impCursor = 0                               // warmane/wotlk
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
 	if v := m.View(); strings.Contains(v, "on this realm:") || strings.Contains(v, "Zulja") {
 		t.Error("foreign realm step 1 mentions another realm's character")
 	}
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc})
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc})
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc}) // back to realm list
 	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc}) // leave the wizard
 
 	// refresh: one keystroke, bound to the active character — the fetch

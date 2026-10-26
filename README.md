@@ -33,7 +33,7 @@ Raid phases for the upgrade filter:
 | `f` | **Filter** | Sets your raid phase, loot routes and unlocks (such as the Molten Front vendors). Phase is saved per realm. |
 | `w` | **Weights** | Adjusts the stat weights for your spec. Defaults come from the WoWSims sims. |
 | `t` | **Talents** | Sets talent points the import couldn't read (WotLK only, where the armory gives tree totals only). |
-| `i` / `r` | **Import / Refresh** | Adds a new character, or re-imports the current one. |
+| `i` / `r` | **Add / Refresh** | Adds a character (realm and name), or loads its current gear from the armory. |
 | `c` | **Characters** | Switches between or deletes imported characters. |
 
 The tips pane on the main screen points out quick fixes, such as a
@@ -68,27 +68,30 @@ twolk
 
 On first launch, twolk says *no character imported yet*. Press `i`.
 
-### 3a. Import a Cataclysm character (Whitemane)
+### 3. Add your character
 
-1. Pick **Whitemane — Gilneas** and press `enter`.
-2. Press `n`, type the character name, and press `enter`.
-3. twolk fetches the character from the armory. It picks up gear,
-   gems, enchants, reforges, exact talents and professions.
+Adding a character takes a realm and a name; its gear always comes in
+through a **refresh**, which opens right after you add it (and later
+with `r`).
 
-### 3b. Import a WotLK character (Warmane)
+1. Pick the realm (for example **Whitemane — Gilneas** or
+   **Warmane — Onyxia**) and press `enter`.
+2. Type the character name and press `enter`.
 
-Warmane's armory sits behind a browser bot check, so this import goes
-through your browser:
+**Whitemane (Cataclysm):** the refresh fetches the character from the
+armory straight away. It picks up gear, gems, enchants, reforges, exact
+talents and professions.
 
-1. Pick **Warmane — Onyxia** (or Icecrown) and press `enter`.
-2. Press `n` and type the character name. twolk shows the exact armory
-   link. Open it in your browser.
-3. Back in twolk, press `y` to copy the export snippet to your clipboard.
-4. In the browser, open the devtools console (`F12`, or `cmd+opt+J` on
+**Warmane (WotLK):** the armory sits behind a browser bot check, so the
+refresh goes through your browser:
+
+1. Open the armory link twolk shows in your browser.
+2. Back in twolk, press `y` to copy the export snippet to your clipboard.
+3. In the browser, open the devtools console (`F12`, or `cmd+opt+J` on
    macOS), paste the snippet and press `enter`. It reads gems and
    enchants from the page and puts the export JSON on your clipboard.
-5. Back in twolk, paste with `cmd+v` or `ctrl+v` and press `enter` to save.
-6. The armory gives only talent tree totals, so if twolk asks, press
+4. Back in twolk, paste with `cmd+v` or `ctrl+v` and press `enter` to save.
+5. The armory gives only talent tree totals, so if twolk asks, press
    `t` and set the talents that affect scoring.
 
 ### 4. Make it useful
@@ -103,7 +106,7 @@ through your browser:
    item comes from.
 4. **Plan ahead:** press `b` for the full BiS set and shopping list,
    and `p` to decide what to spend your currency on.
-5. **Stay current:** after a raid night, press `r` to re-import. Press
+5. **Stay current:** after a raid night, press `r` to refresh. Press
    `c` to switch between characters.
 
 Your characters and settings are saved in `~/.twolk/config.json`.
