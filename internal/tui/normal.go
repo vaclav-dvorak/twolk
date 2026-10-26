@@ -37,7 +37,7 @@ func (m Model) updateNormal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		// is its own flow (r)
 		m.mode = modeImport
 		m.impRefresh = false
-		m.pasted = nil
+		m.pasted, m.typedPaste = nil, false
 		m.errMsg = ""
 		m.importNote = ""
 		m.impStep = 0
@@ -54,7 +54,7 @@ func (m Model) updateNormal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		m.mode = modeImport
 		m.impRefresh = true
-		m.pasted = nil
+		m.pasted, m.typedPaste = nil, false
 		m.errMsg = ""
 		m.importNote = ""
 		m.impStep = 1

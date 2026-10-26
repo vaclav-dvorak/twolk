@@ -2041,3 +2041,42 @@ func TestStrongestPerSlot(t *testing.T) {
 		t.Fatalf("kept %v, want the strong shoulders, the Justice shoulders and row 5", ids)
 	}
 }
+
+// TestImportKeystrokePaste: Windows consoles deliver a paste as one
+// keystroke per character (bubbletea's coninput reader never sets
+// Paste). The export must still land in the buffer — even with the name
+// field focused, and with letters that are shortcuts on this step (the
+// "n" of "name" used to focus the name field and swallow the rest).
+func TestImportKeystrokePaste(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := drive(t, New(cfg), tea.WindowSizeMsg{Width: 120, Height: 40})
+	m = keys(t, m, "i")
+	m.impCursor = 1                                 // Warmane — Icecrown
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter}) // name field, focused
+	m = keys(t, m, "Testchar")
+
+	export := exportChunk1 + exportChunk2
+	m = keys(t, m, export)
+	if got := m.impName.Value(); got != "Testchar" {
+		t.Fatalf("name field took the export: %q", got)
+	}
+	if string(m.pasted) != export {
+		t.Fatalf("buffer = %q, want the export", m.pasted)
+	}
+
+	// esc drops a half-received export without leaving the step
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc})
+	if len(m.pasted) != 0 || m.impStep != 1 {
+		t.Fatalf("esc: buffer %q, step %d", m.pasted, m.impStep)
+	}
+
+	m = keys(t, m, export)
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
+	if m.mode != modeNormal || m.char == nil || m.char.Name != "Testchar" {
+		t.Fatalf("keystroke paste did not import: mode %v err %q", m.mode, m.errMsg)
+	}
+}

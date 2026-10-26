@@ -73,7 +73,7 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "esc":
 			m.mode = modeNormal
-			m.pasted = nil
+			m.pasted, m.typedPaste = nil, false
 			m.errMsg = ""
 		case "up", "k":
 			if m.impCursor > 0 {
@@ -96,7 +96,14 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	// step 1. While the name field is focused it owns every key —
 	// including paste (cmd+v pastes the name) and cursor movement;
 	// enter/esc/tab hand control back to the modal.
+	paste := m.importSelection().server.Import == game.ImportPaste
 	if m.impName.Focused() {
+		if paste && startsExport(msg) {
+			// the export arrived while the name was still being edited
+			// (no name contains "{")
+			m.impName.Blur()
+			return m.typedPasteKey(msg), nil
+		}
 		switch msg.Type {
 		case tea.KeyEnter, tea.KeyEsc, tea.KeyTab:
 			m.impName.Blur()
@@ -116,19 +123,33 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 		m.pasted = append(m.pasted, []byte(string(msg.Runes))...)
+		m.typedPaste = false
 		m.errMsg = ""
 		return m, nil
 	}
 	if m.importSelection().server.Import == game.ImportFetch {
 		return m.updateImportFetch(msg)
 	}
+	// Windows consoles have no bracketed paste: a paste arrives as one
+	// keystroke per character. A "{" opens the export and every rune
+	// after it is data, not a shortcut — otherwise the "n" of "name"
+	// focuses the name field and the rest of the export lands in it.
+	if paste && (startsExport(msg) || (m.typedPaste && isTyped(msg))) {
+		return m.typedPasteKey(msg), nil
+	}
 	switch msg.String() {
 	case "esc":
+		if m.typedPaste {
+			// drop a half-received export, stay on the step
+			m.pasted, m.typedPaste = nil, false
+			m.errMsg = ""
+			return m, nil
+		}
 		if m.impRefresh {
 			m.mode = modeNormal
 		}
 		m.impStep = 0
-		m.pasted = nil
+		m.pasted, m.typedPaste = nil, false
 		m.errMsg = ""
 	case "n":
 		if m.impRefresh {
@@ -136,9 +157,10 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, m.impName.Focus()
 	case "c":
-		m.pasted = nil
+		m.pasted, m.typedPaste = nil, false
 		m.errMsg = ""
 	case "enter":
+		m.typedPaste = false // the keystroke paste is over either way
 		if len(m.pasted) > 0 {
 			return m.saveImport()
 		}
@@ -155,6 +177,33 @@ func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.importNote = "✓ snippet copied — paste it into the browser console on your armory page"
 	}
 	return m, nil
+}
+
+// isTyped reports a printable keystroke (a rune or a space).
+func isTyped(msg tea.KeyMsg) bool {
+	return (msg.Type == tea.KeyRunes || msg.Type == tea.KeySpace) && !msg.Alt
+}
+
+// startsExport reports a typed "{" — the first character of an export
+// JSON delivered as keystrokes.
+func startsExport(msg tea.KeyMsg) bool {
+	return isTyped(msg) && !msg.Paste && len(msg.Runes) > 0 && msg.Runes[0] == '{'
+}
+
+// typedPasteKey appends one keystroke of a character-by-character paste
+// to the export buffer; a "{" starts a fresh one.
+func (m Model) typedPasteKey(msg tea.KeyMsg) Model {
+	if startsExport(msg) && !m.typedPaste {
+		m.pasted, m.typedPaste = nil, false
+	}
+	m.typedPaste = true
+	if msg.Type == tea.KeySpace {
+		m.pasted = append(m.pasted, ' ')
+	} else {
+		m.pasted = append(m.pasted, string(msg.Runes)...)
+	}
+	m.errMsg = ""
+	return m
 }
 
 // updateImportFetch is step 1 for ImportFetch servers: no paste, no
@@ -258,7 +307,7 @@ func (m Model) saveImport() (tea.Model, tea.Cmd) {
 	}
 	m.mode = modeNormal
 	m.impRefresh = false
-	m.pasted = nil
+	m.pasted, m.typedPaste = nil, false
 	m.errMsg = ""
 	return m, cmd
 }

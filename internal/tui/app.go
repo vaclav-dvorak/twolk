@@ -111,6 +111,7 @@ type Model struct {
 	mode       mode
 	cursor     int    // selected row in the gear list
 	pasted     []byte // import modal paste buffer; not editable, only pasteable
+	typedPaste bool   // pasted is arriving one keystroke per rune (Windows consoles)
 	importNote string // confirmation line inside the import modal
 	// import wizard: pick a realm from the game modules' server
 	// registries, then (optionally) name the character for exact
