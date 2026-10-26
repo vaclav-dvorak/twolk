@@ -74,7 +74,7 @@ func New(d *db.Database) *game.Game {
 		Unlocks: []game.Unlock{{Slug: "molten-front", Label: "Molten Front vendors (dailies unlock)",
 			Short: "Molten Front", Phase: 3, Zone: 5733}},
 		TierLabel: tierLabel,
-		// hunter builds have profiles (profiles.go); everything else
+		// hunter, druid and warrior builds have profiles; everything else
 		// degrades to the read-only gear view
 		FindProfile: findProfileFor,
 		Rules:       rules85,

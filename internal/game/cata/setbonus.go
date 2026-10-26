@@ -7,7 +7,8 @@ import "github.com/vaclav-dvorak/twolk/internal/score"
 // from the wowhead cata tooltips) so the set drill-down explains what
 // a set does instead of "not valued". EP is another matter: an EP is
 // only meaningful in some spec's sim-anchored units, and only hunters
-// and druids have cata profiles — every other class carries EP 0 (shown as an
+// and druids have MEASURED cata profiles (warriors score on published
+// weights with no measured EPPerDPS) — every other class carries EP 0 (shown as an
 // unvalued note, skipped by the BiS tier seeding) until its profile
 // lands and brings its sim units; value the bonuses THEN, in the same
 // pass (mechanics live in wowsims sim/<class>/*items*.go).
@@ -46,7 +47,7 @@ var setBonuses = map[string][]score.SetBonus{
 		{Pieces: 4, EP: 340, Note: "+90 agility, +5% focus regen"},
 	},
 
-	// ================== Warrior (notes only, EP 0) =====================
+	// ====== Warrior (notes only, EP 0 until EPPerDPS is measured) ======
 	"Earthen Warplate": {
 		{Pieces: 2, Note: "Bloodthirst/Mortal Strike +5% damage"},
 		{Pieces: 4, Note: "Overpower/Raging Blow stack +1% AP (3)"},

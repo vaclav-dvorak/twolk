@@ -245,6 +245,7 @@ var profiles = []*score.Profile{
 	hunterProfile("Survival",
 		hunterWeights(0.5, 3.27, 1.0, svHitEP, 1.17, 0.89, 0.88), 3.75),
 	balanceProfile, catProfile, bearProfile, restoProfile,
+	armsProfile, furyTGProfile, furySMFProfile, protProfile,
 }
 
 // findProfile resolves the build profile for a class and talent tree
@@ -262,6 +263,9 @@ func findProfileFor(class db.Class, tree string, ranks map[int]int) *score.Profi
 			return bearProfile
 		}
 		return catProfile
+	}
+	if class == db.ClassWarrior && tree == "Fury" {
+		return furyProfileFor(ranks)
 	}
 	p := score.FindIn(profiles, class, tree)
 	if p == balanceProfile {
