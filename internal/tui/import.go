@@ -186,9 +186,9 @@ func (m Model) updateRefresh(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	if msg.Paste {
-		m.pasted = append(m.pasted, []byte(string(msg.Runes))...)
+		m.pasted = append(m.pasted, exportText(msg.Runes)...)
 		m.typedPaste = false
-		m.errMsg = ""
+		m.errMsg, m.importNote = "", ""
 		return m, nil
 	}
 	// Windows consoles have no bracketed paste: a paste arrives as one
@@ -256,10 +256,26 @@ func (m Model) typedPasteKey(msg tea.KeyMsg) Model {
 	if msg.Type == tea.KeySpace {
 		m.pasted = append(m.pasted, ' ')
 	} else {
-		m.pasted = append(m.pasted, string(msg.Runes)...)
+		m.pasted = append(m.pasted, exportText(msg.Runes)...)
 	}
-	m.errMsg = ""
+	m.errMsg, m.importNote = "", ""
 	return m
+}
+
+// exportText keeps the printable runes of incoming export text. A
+// keystroke paste on an AltGr layout interleaves the Ctrl and Right Alt
+// key-downs of every "{", "[" or "@", and bubbletea's Windows reader
+// delivers those as runes carrying the console's empty character, NUL —
+// which broke the JSON. The export is one line, so no control
+// character belongs in it.
+func exportText(runes []rune) []byte {
+	var b []byte
+	for _, r := range runes {
+		if r >= 0x20 && r != 0x7f {
+			b = append(b, string(r)...)
+		}
+	}
+	return b
 }
 
 // startFetch kicks off the armory-API fetch for the wizard's current

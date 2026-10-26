@@ -2093,11 +2093,18 @@ func TestImportKeystrokePaste(t *testing.T) {
 
 // altGrKeys types s one rune per KeyMsg the way bubbletea's Windows
 // reader delivers it on an AltGr layout: brackets, braces and "@" come
-// with Alt set.
+// with Alt set, each preceded by the Ctrl and Right Alt key-downs, which
+// arrive as runes carrying NUL (v1.0.4 put those into the export).
 func altGrKeys(t *testing.T, m Model, s string) Model {
 	t.Helper()
 	for _, r := range s {
-		m = drive(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}, Alt: strings.ContainsRune("{}[]@", r)})
+		altGr := strings.ContainsRune("{}[]@", r)
+		if altGr {
+			for range 2 {
+				m = drive(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{0}, Alt: true})
+			}
+		}
+		m = drive(t, m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}, Alt: altGr})
 	}
 	return m
 }
