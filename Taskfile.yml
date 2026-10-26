@@ -1,0 +1,44 @@
+version: "3"
+
+output: prefixed
+
+silent: true
+
+dotenv: [".env"]
+
+env:
+  CGO_ENABLED: "0"
+
+vars:
+#  GIT_REV:
+#    sh: git rev-parse --short HEAD
+#  GIT_TAG:
+#    sh: git describe --tags --abbrev=0
+
+  FILE: twolk
+
+tasks:
+  prepare:
+    desc: Download dependencies and prepare dev env
+    cmds:
+      - pre-commit install
+      - go mod download
+      - go mod tidy
+      - go mod vendor
+
+  update:
+    desc: Update dependencies and tidy env
+    cmds:
+      - go get -u
+      - go mod tidy
+      - go mod vendor
+
+  build:
+    desc: Builds the cli binary
+    cmds:
+#      - go build -trimpath -ldflags="{{.LDFLAGS}}" -o ./bin/{{.FILE}} main.go
+
+  test:
+    desc: Runs all tests
+    cmds:
+      - go test ./...

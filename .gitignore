@@ -1,0 +1,54 @@
+# Private dev notes (contain character names / session logs)
+/plan.md
+/sessions.md
+
+# Character data never lives in the repo (config is ~/.twolk/), but guard
+# against stray exports, imports and config copies dropped here.
+config.json
+config.json.bak*
+*.har
+/char*.json
+/export*.json
+.env
+.env.*
+
+# Scratch / testing leftovers
+scratch/
+scratchpad/
+tmp/
+/out/
+*.tmp
+*.log
+*.prof
+*.pprof
+*.test
+coverage.out
+*.coverprofile
+
+# Go
+/vendor/
+/bin/
+/dist/
+/twolk
+/eptool
+
+# Python (tools/gen_*.py)
+__pycache__/
+*.pyc
+.venv/
+
+# Downloaded raw dumps (e.g. TDB 7z) — only generated outputs are committed
+*.7z
+*.zip
+*.tar.gz
+
+# Editors / OS
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
+
+# Claude Code local state
+.claude/settings.local.json

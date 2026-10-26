@@ -1,0 +1,940 @@
+[
+ {
+  "id": 69109,
+  "name": "Scales of Life",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69110,
+  "name": "Variable Pulse Lightning Capacitor",
+  "lvl": 397,
+  "heroic": true,
+  "cost": 80
+ },
+ {
+  "id": 69111,
+  "name": "Jaws of Defeat",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69112,
+  "name": "The Hungerer",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69113,
+  "name": "Apparatus of Khaz'goroth",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69138,
+  "name": "Spidersilk Spindle",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69139,
+  "name": "Necromantic Focus",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69149,
+  "name": "Eye of Blazing Power",
+  "lvl": 391,
+  "heroic": true,
+  "cost": 70
+ },
+ {
+  "id": 69150,
+  "name": "Matrix Restabilizer",
+  "lvl": 397,
+  "heroic": true,
+  "cost": 80
+ },
+ {
+  "id": 69167,
+  "name": "Vessel of Acceleration",
+  "lvl": 397,
+  "heroic": true,
+  "cost": 80
+ },
+ {
+  "id": 69897,
+  "name": "Fandral's Flamescythe",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 70733,
+  "name": "Alysra's Razor",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 70915,
+  "name": "Shard of Torment",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 70922,
+  "name": "Mandible of Beth'tilac",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 70991,
+  "name": "Arbalest of Erupting Fury",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 71013,
+  "name": "Feeding Frenzy",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71014,
+  "name": "Skullstealer Greataxe",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 71039,
+  "name": "Funeral Pyre",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 71312,
+  "name": "Gatecrasher",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71323,
+  "name": "Molten Scream",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 15
+ },
+ {
+  "id": 71347,
+  "name": "Stinger of the Flaming Scorpion",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 71352,
+  "name": "Sulfuras, the Extinguished Hand",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 71353,
+  "name": "Arathar, the Eye of Flame",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 71355,
+  "name": "Ko'gun, Hammer of the Firelord",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 50
+ },
+ {
+  "id": 71617,
+  "name": "Crystallized Firestone",
+  "lvl": 391,
+  "heroic": false,
+  "cost": 60
+ },
+ {
+  "id": 71668,
+  "name": "Helm of the Fiery Vanquisher",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71674,
+  "name": "Mantle of the Fiery Vanquisher",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71675,
+  "name": "Helm of the Fiery Conqueror",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71681,
+  "name": "Mantle of the Fiery Conqueror",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71682,
+  "name": "Helm of the Fiery Protector",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71688,
+  "name": "Mantle of the Fiery Protector",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71775,
+  "name": "Smoldering Censer of Purity",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 71776,
+  "name": "Eye of Purification",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 35
+ },
+ {
+  "id": 71779,
+  "name": "Avool's Incendiary Shanker",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71780,
+  "name": "Zoid's Firelit Greatsword",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 71782,
+  "name": "Shatterskull Bonecrusher",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71785,
+  "name": "Firethorn Mindslicer",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 35
+ },
+ {
+  "id": 71787,
+  "name": "Entrail Disgorger",
+  "lvl": 378,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 71798,
+  "name": "Sho'ravon, Greatstaff of Annihilation",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 77969,
+  "name": "Seal of the Seven Signs",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77970,
+  "name": "Soulshifter Vortex",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77971,
+  "name": "Insignia of the Corrupted Mind",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77972,
+  "name": "Creche of the Final Dragon",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77973,
+  "name": "Starcatcher Compass",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77974,
+  "name": "Wrath of Unchaining",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 77975,
+  "name": "Will of Unbinding",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 77976,
+  "name": "Heart of Unliving",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 77977,
+  "name": "Eye of Unmaking",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 77978,
+  "name": "Resolve of Undying",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 77979,
+  "name": "Vial of Shadows",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77980,
+  "name": "Cunning of the Cruel",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77981,
+  "name": "Windward Heart",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77982,
+  "name": "Bone-Link Fetish",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 77983,
+  "name": "Indomitable Pride",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78374,
+  "name": "Razor Saronite Chip",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 25
+ },
+ {
+  "id": 78375,
+  "name": "Underdweller's Spaulders",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78376,
+  "name": "Sporebeard Gauntlets",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78377,
+  "name": "Rockhide Bracers",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78378,
+  "name": "Brackenshell Shoulderplates",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78380,
+  "name": "Robe of Glowing Stone",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 40
+ },
+ {
+  "id": 78381,
+  "name": "Mosswrought Shoulderguards",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78382,
+  "name": "Petrified Fungal Heart",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78384,
+  "name": "Mycosynth Wristguards",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78385,
+  "name": "Girdle of Shattered Stone",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78386,
+  "name": "Pillarfoot Greaves",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78395,
+  "name": "Belt of Flayed Skin",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78396,
+  "name": "Treads of Crushed Flesh",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78397,
+  "name": "Graveheart Bracers",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78398,
+  "name": "Cord of the Slain Champion",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78399,
+  "name": "Finger of Zon'ozz",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 78400,
+  "name": "Grotesquely Writhing Bracers",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78408,
+  "name": "Interrogator's Bloody Footpads",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78411,
+  "name": "Mindstrainer Treads",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78412,
+  "name": "Heartblood Wristplates",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78421,
+  "name": "Signet of Grasping Mouths",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78422,
+  "name": "Electrowing Dagger",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78423,
+  "name": "Treads of Dormant Dreams",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78424,
+  "name": "Runescriven Demon Collar",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78425,
+  "name": "Bracers of the Banished",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78427,
+  "name": "Ring of the Riven",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78428,
+  "name": "Girdle of the Grotesque",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78438,
+  "name": "Bracers of Looming Darkness",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78439,
+  "name": "Stillheart Warboots",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78440,
+  "name": "Curled Twilight Claw",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78441,
+  "name": "Ledger of Revolting Rituals",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 25
+ },
+ {
+  "id": 78442,
+  "name": "Treads of Sordid Screams",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78443,
+  "name": "Imperfect Specimens 27 and 28",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78444,
+  "name": "Dragonfracture Belt",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78454,
+  "name": "Shadow Wing Armbands",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78455,
+  "name": "Belt of the Beloved Companion",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78456,
+  "name": "Blackhorn's Mighty Bulwark",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78457,
+  "name": "Janglespur Jackboots",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78458,
+  "name": "Timepiece of the Bronze Flight",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78460,
+  "name": "Goriona's Collar",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78466,
+  "name": "Gloves of Liquid Smoke",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78467,
+  "name": "Molten Blood Footpads",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 78468,
+  "name": "Belt of Shattered Elementium",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 65
+ },
+ {
+  "id": 78469,
+  "name": "Gauntlets of the Golden Thorn",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78470,
+  "name": "Backbreaker Spaulders",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78480,
+  "name": "Vishanka, Jaws of the Earth",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 100
+ },
+ {
+  "id": 78481,
+  "name": "No'Kaled, the Elements of Death",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 78482,
+  "name": "Kiril, Fury of Beasts",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 100
+ },
+ {
+  "id": 78483,
+  "name": "Blade of the Unmaker",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 78484,
+  "name": "Rathrak, the Poisonous Mind",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 75
+ },
+ {
+  "id": 78485,
+  "name": "Maw of the Dragonlord",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 75
+ },
+ {
+  "id": 78486,
+  "name": "Ti'tahk, the Steps of Time",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 100
+ },
+ {
+  "id": 78487,
+  "name": "Gurthalak, Voice of the Deeps",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 100
+ },
+ {
+  "id": 78488,
+  "name": "Souldrinker",
+  "lvl": 390,
+  "heroic": false,
+  "cost": 70
+ },
+ {
+  "id": 78494,
+  "name": "Seal of Primordial Shadow",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78495,
+  "name": "Infinite Loop",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78496,
+  "name": "Signet of Suturing",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78497,
+  "name": "Breathstealer Band",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78498,
+  "name": "Hardheart Ring",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 30
+ },
+ {
+  "id": 78862,
+  "name": "Chest of the Corrupted Vanquisher",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78863,
+  "name": "Chest of the Corrupted Conqueror",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78864,
+  "name": "Chest of the Corrupted Protector",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78865,
+  "name": "Gauntlets of the Corrupted Vanquisher",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78866,
+  "name": "Gauntlets of the Corrupted Conqueror",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78867,
+  "name": "Gauntlets of the Corrupted Protector",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78868,
+  "name": "Crown of the Corrupted Vanquisher",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78869,
+  "name": "Crown of the Corrupted Conqueror",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78870,
+  "name": "Crown of the Corrupted Protector",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78871,
+  "name": "Leggings of the Corrupted Vanquisher",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78872,
+  "name": "Leggings of the Corrupted Conqueror",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78873,
+  "name": "Leggings of the Corrupted Protector",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 55
+ },
+ {
+  "id": 78874,
+  "name": "Shoulders of the Corrupted Vanquisher",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78875,
+  "name": "Shoulders of the Corrupted Conqueror",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 78876,
+  "name": "Shoulders of the Corrupted Protector",
+  "lvl": 384,
+  "heroic": false,
+  "cost": 45
+ },
+ {
+  "id": 239110,
+  "name": "Commendation of Service",
+  "lvl": 1,
+  "heroic": false,
+  "cost": 10
+ },
+ {
+  "id": 239111,
+  "name": "Satchel of the Flickering Cowl",
+  "lvl": 85,
+  "heroic": true,
+  "cost": 30
+ },
+ {
+  "id": 239112,
+  "name": "Satchel of the Flickering Shoulders",
+  "lvl": 85,
+  "heroic": true,
+  "cost": 25
+ },
+ {
+  "id": 239113,
+  "name": "Satchel of the Flickering Wristbands",
+  "lvl": 85,
+  "heroic": true,
+  "cost": 25
+ },
+ {
+  "id": 239114,
+  "name": "Satchel of the Flickering Handguards",
+  "lvl": 85,
+  "heroic": true,
+  "cost": 25
+ },
+ {
+  "id": 239220,
+  "name": "Satchel of the Flickering Shoulderpads",
+  "lvl": 85,
+  "heroic": true,
+  "cost": 25
+ }
+]

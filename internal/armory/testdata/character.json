@@ -1,0 +1,123 @@
+{
+ "name": "Testchar",
+ "realm": "Testrealm",
+ "online": false,
+ "level": "80",
+ "faction": "Horde",
+ "gender": "Male",
+ "race": "Troll",
+ "racemask": 128,
+ "class": "Hunter",
+ "classmask": 4,
+ "honorablekills": "7",
+ "guild": "",
+ "achievementpoints": "1420",
+ "equipment": [
+  {
+   "name": "Conqueror's Scourgestalker Headpiece",
+   "item": "46143",
+   "transmog": ""
+  },
+  {
+   "name": "Broach of the Wailing Night",
+   "item": "45820",
+   "transmog": ""
+  },
+  {
+   "name": "Valorous Cryptstalker Spaulders",
+   "item": "40507",
+   "transmog": ""
+  },
+  {
+   "name": "Ice Striker's Cloak",
+   "item": "43566",
+   "transmog": ""
+  },
+  {
+   "name": "Polished Regimental Hauberk",
+   "item": "44295",
+   "transmog": ""
+  },
+  {
+   "name": "Ebon Filigreed Doublet",
+   "item": "42360",
+   "transmog": ""
+  },
+  {
+   "name": "Interwoven Scale Bracers",
+   "item": "37170",
+   "transmog": ""
+  },
+  {
+   "name": "Gloves of the Dark Exile",
+   "item": "47561",
+   "transmog": ""
+  },
+  {
+   "name": "Belt of the Ardent Marksman",
+   "item": "45827",
+   "transmog": ""
+  },
+  {
+   "name": "Darkcore Leggings",
+   "item": "45504",
+   "transmog": ""
+  },
+  {
+   "name": "Boots of the Neverending Path",
+   "item": "44297",
+   "transmog": ""
+  },
+  {
+   "name": "Etched Band of the Kirin Tor",
+   "item": "48954",
+   "transmog": ""
+  },
+  {
+   "name": "Signet of Edward the Odd",
+   "item": "44308",
+   "transmog": ""
+  },
+  {
+   "name": "Mirror of Truth",
+   "item": "40684",
+   "transmog": ""
+  },
+  {
+   "name": "Banner of Victory",
+   "item": "47214",
+   "transmog": ""
+  },
+  {
+   "name": "Staff of Feral Furies",
+   "item": "45212",
+   "transmog": ""
+  },
+  {
+   "name": "True-aim Long Rifle",
+   "item": "47568",
+   "transmog": ""
+  }
+ ],
+ "talents": [
+  {
+   "tree": "Survival",
+   "points": [
+    0,
+    15,
+    56
+   ]
+  }
+ ],
+ "professions": [
+  {
+   "name": "Leatherworking",
+   "skill": "442"
+  },
+  {
+   "name": "Skinning",
+   "skill": "450"
+  }
+ ],
+ "pvpteams": []
+}
