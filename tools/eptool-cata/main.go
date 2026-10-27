@@ -22,8 +22,8 @@
 // cause was the compensation handing back DERIVED totals (health, mana,
 // intellect's spell power) on top of the stats that derive them. With
 // those left out (swapRun), session 48's null swaps read exactly 0.00%
-// for casters. Warriors' strength→AP is not yet excluded: rerun a null
-// control before trusting -swap on a melee spec.
+// for casters, and for warriors once strength's attack power and parry
+// are left out too.
 //
 //	./wep -spec fire -replace 14=71085 -swap 8=71435    # 4pc: one tier piece out
 package main
@@ -238,6 +238,10 @@ func swapRun(spec string, iters int, seed int64) {
 	delete(comp, 25)
 	if caster(spec) {
 		comp[14] -= comp[3]
+	} else {
+		// warriors: 2 attack power and 0.27 parry rating per strength
+		comp[12] -= 2 * comp[0]
+		comp[10] -= 0.27 * comp[0]
 	}
 	b := run(spec, nil, iters, seed)
 	r := runPlayer(swapped, comp, iters, seed)

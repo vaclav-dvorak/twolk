@@ -46,49 +46,51 @@ var setBonuses = map[string][]score.SetBonus{
 		{Pieces: 4, EP: 340, Note: "+90 agility, +5% focus regen"},
 	},
 
-	// ===================== Warrior (DPS sets valued) ====================
-	// AP = 1 units, the shared scale of the three DPS profiles (warrior.go:
-	// ~270 / ~245 / ~210 EP per 1% DPS for arms / TG / SMF); each EP is
-	// the mean over the three specs. Inputs are the pinned sim's own
-	// readings on the preset that wears the set (P1 = T11, P3 = T12, P4 =
-	// T13; session 47 damage breakdowns and aura uptimes). Measuring the
-	// bonuses by stat-compensated gear swaps was tried and REJECTED: a
-	// null swap read ±1%, as large as the bonuses. The prot Battleplate
-	// lines stay notes (no DPS anchor); a prot wearing Warplate would see
-	// DPS EP, which never happens in practice.
-	//
-	// T11. 2pc: +5% Mortal Strike/Bloodthirst — MS is 18% of arms damage,
-	// BT 27-30% of fury → 0.8-1.4%. 4pc: +1% AP per Overpower/Raging
-	// Blow, 3 stacks, measured 86-99% uptime → ~3% of 15-16k AP = 445 AP.
+	// ===================== Warrior (DPS sets MEASURED) ==================
+	// Measured like the mage and warlock lines (see there): DPS lost when
+	// tier pieces are swapped for non-set PLATE strength items of the
+	// same slot (a cloth item breaks plate specialization, -5% strength)
+	// with the stat difference handed back — strength's attack power and
+	// parry left out of the compensation, so a null ring swap reads
+	// exactly 0.00%. Each set on the preset that wears it (T11 on P1, T12
+	// on P3, T13 on P4; two seed ranges within 0.04 points), priced at the
+	// spec's P3 scale (warrior.go): ~270 / ~246 / ~211 EP per 1% DPS for
+	// arms / TG / SMF, one row per build (Role: tree slug for arms, the
+	// fury roles). Session 47 had reasoned these as one mean per set; the
+	// T13 2pc read 170 against a measured ~430 — Heroic Strike's damage
+	// share undercounts what ten saved rage buys. The prot Battleplate
+	// lines stay notes (no DPS anchor).
 	"Earthen Warplate": {
-		{Pieces: 2, EP: 270, Note: "Bloodthirst/Mortal Strike +5% damage"},
-		{Pieces: 4, EP: 445, Note: "Overpower/Raging Blow stack +1% AP (3)"},
+		{Pieces: 2, EP: 151, Note: "Bloodthirst/Mortal Strike +5% damage", Role: "arms"},
+		{Pieces: 2, EP: 281, Note: "Bloodthirst/Mortal Strike +5% damage", Role: "tg"},
+		{Pieces: 2, EP: 273, Note: "Bloodthirst/Mortal Strike +5% damage", Role: "smf"},
+		{Pieces: 4, EP: 516, Note: "Overpower/Raging Blow stack +1% AP (3)", Role: "arms"},
+		{Pieces: 4, EP: 545, Note: "Overpower/Raging Blow stack +1% AP (3)", Role: "tg"},
+		{Pieces: 4, EP: 412, Note: "Overpower/Raging Blow stack +1% AP (3)", Role: "smf"},
 	},
 	"Earthen Battleplate": {
 		{Pieces: 2, Note: "Shield Slam +5% damage"},
 		{Pieces: 4, Note: "Shield Wall +50% duration"},
 	},
-	// T12. 2pc: shouts grant +10% physical damage for 12s — measured
-	// 19.5% uptime → ~1.9%. 4pc: 30% of MS/Raging Blow fire a normalized
-	// weapon hit as Fire — measured 1.9% (arms), 2.4% (TG), 1.2% (SMF)
-	// of all damage.
 	"Molten Giant Warplate": {
-		{Pieces: 2, EP: 460, Note: "shouts grant +10% physical damage"},
-		{Pieces: 4, EP: 450, Note: "MS/Raging Blow proc a 100% weapon Fire hit"},
+		{Pieces: 2, EP: 523, Note: "shouts grant +10% physical damage", Role: "arms"},
+		{Pieces: 2, EP: 503, Note: "shouts grant +10% physical damage", Role: "tg"},
+		{Pieces: 2, EP: 430, Note: "shouts grant +10% physical damage", Role: "smf"},
+		{Pieces: 4, EP: 512, Note: "MS/Raging Blow proc a 100% weapon Fire hit", Role: "arms"},
+		{Pieces: 4, EP: 595, Note: "MS/Raging Blow proc a 100% weapon Fire hit", Role: "tg"},
+		{Pieces: 4, EP: 258, Note: "MS/Raging Blow proc a 100% weapon Fire hit", Role: "smf"},
 	},
 	"Molten Giant Battleplate": {
 		{Pieces: 2, Note: "Shield Slam +20% as Fire"},
 		{Pieces: 4, Note: "+6% parry after Shield Block"},
 	},
-	// T13 is REASONED on measured inputs (its effects are rage and armor,
-	// which a damage breakdown cannot attribute). 2pc: Heroic Strike -10
-	// rage for 15s after Inner Rage — up 30% (fury) to 50% (arms) of the
-	// fight, HS is 8-12% of damage → ~0.7%. 4pc: 6% of Bloodthirsts / 13%
-	// of Mortal Strikes proc Colossus Smash (armor ignored 6s) — ~6 extra
-	// windows per 300s partly overlapping the rotation's own → ~2.5%.
 	"Colossal Dragonplate Battlegear": {
-		{Pieces: 2, EP: 170, Note: "Heroic Strike -10 rage during Inner Rage"},
-		{Pieces: 4, EP: 610, Note: "Bloodthirst/Mortal Strike proc Colossus Smash"},
+		{Pieces: 2, EP: 435, Note: "Heroic Strike -10 rage during Inner Rage", Role: "arms"},
+		{Pieces: 2, EP: 428, Note: "Heroic Strike -10 rage during Inner Rage", Role: "tg"},
+		{Pieces: 2, EP: 423, Note: "Heroic Strike -10 rage during Inner Rage", Role: "smf"},
+		{Pieces: 4, EP: 648, Note: "Bloodthirst/Mortal Strike proc Colossus Smash", Role: "arms"},
+		{Pieces: 4, EP: 423, Note: "Bloodthirst/Mortal Strike proc Colossus Smash", Role: "tg"},
+		{Pieces: 4, EP: 400, Note: "Bloodthirst/Mortal Strike proc Colossus Smash", Role: "smf"},
 	},
 	// PvP set, flat strength from the sim source (× 2.21).
 	"Gladiator's Battlegear": {

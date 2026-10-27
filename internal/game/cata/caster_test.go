@@ -50,9 +50,9 @@ func TestCasterHitCap(t *testing.T) {
 	}
 }
 
-// TestCasterSetBonusesPerTree: the mage and warlock sets list one row
-// per tree; a profile sees its own row at each piece count and none of
-// the others'.
+// TestCasterSetBonusesPerTree: the mage, warlock and warrior DPS sets
+// list one row per build; a profile sees its own row at each piece
+// count and none of the others'.
 func TestCasterSetBonusesPerTree(t *testing.T) {
 	for _, tc := range []struct {
 		prof   *score.Profile
@@ -64,6 +64,10 @@ func TestCasterSetBonusesPerTree(t *testing.T) {
 		{fireProfile, "Firelord's Vestments", 889, 0},
 		{afflictionProfile, "Shadowflame Regalia", 126, 0},
 		{destructionProfile, "Vestments of the Faceless Shroud", 374, 0},
+		// warriors scope by role (fury) or tree (arms) the same way
+		{armsProfile, "Colossal Dragonplate Battlegear", 648, 0},
+		{furyTGProfile, "Molten Giant Warplate", 595, 0},
+		{furySMFProfile, "Molten Giant Warplate", 258, 0},
 	} {
 		bs := rules85.SetBonusesForRole(tc.set, tc.prof.SetBonusAudience())
 		if len(bs) != 2 {
