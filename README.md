@@ -13,7 +13,7 @@ list for your current raid phase.
 | Game | Server / realm | Import | Scored specs |
 |---|---|---|---|
 | **WotLK 3.3.5a** (legacy) | Warmane: Onyxia, Icecrown | paste (browser export) | all 10 classes, every talent tree |
-| **Cataclysm 4.4.2** (classic) | Whitemane: Gilneas | fetched directly from the armory API | Hunter (BM / MM / SV), Druid (Balance / Feral cat / Feral bear / Restoration), Warrior (Arms / Fury Titan's Grip / Fury Single-Minded Fury / Protection) |
+| **Cataclysm 4.4.2** (classic) | Whitemane: Gilneas | fetched directly from the armory API | Hunter (BM / MM / SV), Druid (Balance / Feral cat / Feral bear / Restoration), Warrior (Arms / Fury Titan's Grip / Fury Single-Minded Fury / Protection), Mage (Arcane / Fire), Warlock (Affliction / Demonology / Destruction) |
 
 Other Cataclysm classes import and show their gear, but they aren't
 scored yet.
@@ -120,8 +120,8 @@ Character data stays on your machine.
   [wowsims/wotlk](https://github.com/wowsims/wotlk) and
   [wowsims/cata](https://github.com/wowsims/cata) (MIT licensed),
   pinned to fixed commits and embedded under `internal/db/data/`.
-  Cataclysm hunter, druid and warrior stat weights, trinket procs and
-  tier bonuses were checked by running the WoWSims cata simulator.
+  Cataclysm hunter, druid, warrior, mage and warlock stat weights,
+  trinket procs and tier bonuses were checked by running the WoWSims cata simulator.
   Thank you to the WoWSims team.
 - **[AzerothCore](https://github.com/azerothcore/azerothcore-wotlk)**
   and **[TrinityCore](https://github.com/TrinityCore/TrinityCore)**
