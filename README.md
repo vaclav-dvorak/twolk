@@ -43,19 +43,19 @@ missing enchant, an empty socket or an unused profession bonus.
 
 ### 1. Install
 
-You need Go 1.26 or newer.
+Download the archive for your system from the
+[releases page](https://github.com/vaclav-dvorak/twolk/releases/latest)
+and unpack it:
 
-```sh
-go install github.com/vaclav-dvorak/twolk@latest
-```
+| System | File |
+|---|---|
+| macOS (Apple silicon) | `twolk_<version>_darwin_arm64.tar.gz` |
+| Linux (x86-64) | `twolk_<version>_linux_amd64.tar.gz` |
+| Windows (x86-64) | `twolk_<version>_windows_amd64.zip` |
 
-Or build it from a clone:
-
-```sh
-git clone https://github.com/vaclav-dvorak/twolk
-cd twolk
-go build -o twolk .
-```
+Put the `twolk` binary (`twolk.exe` on Windows) somewhere on your
+`PATH`. The binary is not signed, so macOS blocks it on first launch;
+clear the quarantine flag once with `xattr -d com.apple.quarantine twolk`.
 
 The item databases are built into the binary, so twolk never needs the
 network except to import characters.
