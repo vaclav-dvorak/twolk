@@ -88,6 +88,10 @@ func (p *Profile) CanTrigger(e *db.Effect) bool {
 	if strings.Contains(e.Callback, "Taken") {
 		return true
 	}
+	if p.NoPeriodicDamage && strings.Contains(e.Callback, "OnPeriodicDamageDealt") &&
+		!strings.Contains(e.Callback, "OnSpellHitDealt") {
+		return false
+	}
 	need, known := maskEvents(e.ProcMask)
 	if !known {
 		return true

@@ -86,7 +86,7 @@ func (s *Scorer) solveShape(ws []Worn, roles []weaponRole, allow func(*db.Item) 
 	// copy of the base result, then descend freely — the bonus-aware
 	// objective decides whether the threshold survives
 	for _, name := range curatedSetsIn(s.rules(), cands) {
-		for _, b := range s.rules().SetBonusesForRole(name, s.prof.Role) {
+		for _, b := range s.rules().SetBonusesForRole(name, s.prof.SetBonusAudience()) {
 			if b.EP <= 0 {
 				continue
 			}

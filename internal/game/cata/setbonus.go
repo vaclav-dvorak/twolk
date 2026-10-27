@@ -7,7 +7,7 @@ import "github.com/vaclav-dvorak/twolk/internal/score"
 // from the wowhead cata tooltips) so the set drill-down explains what
 // a set does instead of "not valued". EP is another matter: an EP is
 // only meaningful in some spec's sim-anchored units, and only hunters,
-// druids and warriors have cata profiles — every other class carries EP 0 (shown as an
+// druids, warriors, mages and warlocks have cata profiles — every other class carries EP 0 (shown as an
 // unvalued note, skipped by the BiS tier seeding) until its profile
 // lands and brings its sim units; value the bonuses THEN, in the same
 // pass (mechanics live in wowsims sim/<class>/*items*.go).
@@ -277,32 +277,62 @@ var setBonuses = map[string][]score.SetBonus{
 		{Pieces: 4, Note: "longer Shadow Dance/Adrenaline Rush/Vendetta"},
 	},
 
-	// ==================== Mage (notes only, EP 0) ======================
+	// ================ Mage + Warlock (MEASURED, per tree) ===============
+	// The first EP that is measured rather than reasoned. Each bonus is
+	// the DPS lost when tier pieces are swapped for non-set items of the
+	// same slot with the stat difference handed back (tools/eptool-cata
+	// -swap): one piece out loses the 4pc, three the 2pc as well. The
+	// method session 47 rejected works once the compensation leaves out
+	// DERIVED gear stats (health, mana, intellect's spell power) — null
+	// swaps (same bonus, different item) now read exactly 0.00%. Each set
+	// is measured on the preset that wears it (T11 on P1, T12 on P3, T13
+	// on P4; both seed ranges within 0.03 points) and priced at the
+	// spec's P3 scale (caster.go): ~136 / ~126 EP per 1% DPS for arcane /
+	// fire, ~135 / ~143 / ~137 for affliction / demonology / destruction.
+	// The classes share each set across trees, so every row is scoped to
+	// its tree (SetBonus.Role matches the tree slug).
 	"Firelord's Vestments": {
-		{Pieces: 2, Note: "Arcane Missiles/Ice Lance/Pyroblast +5% crit"},
-		{Pieces: 4, Note: "foundation bolts cast -10%"},
+		{Pieces: 2, EP: 88, Note: "Arcane Missiles/Ice Lance/Pyroblast +5% crit", Role: "arcane"},
+		{Pieces: 2, EP: 117, Note: "Arcane Missiles/Ice Lance/Pyroblast +5% crit", Role: "fire"},
+		{Pieces: 4, EP: 611, Note: "foundation bolts cast -10%", Role: "arcane"},
+		{Pieces: 4, EP: 889, Note: "foundation bolts cast -10%", Role: "fire"},
 	},
 	"Firehawk Robes of Conflagration": {
-		{Pieces: 2, Note: "Mirror Image proc on foundation bolts"},
-		{Pieces: 4, Note: "more Brain Freeze/Hot Streak; cheap Arcane Power"},
+		{Pieces: 2, EP: 233, Note: "Mirror Image proc on foundation bolts", Role: "arcane"},
+		{Pieces: 2, EP: 183, Note: "Mirror Image proc on foundation bolts", Role: "fire"},
+		{Pieces: 4, EP: 59, Note: "more Brain Freeze/Hot Streak; cheap Arcane Power", Role: "arcane"},
+		{Pieces: 4, EP: 554, Note: "more Brain Freeze/Hot Streak; cheap Arcane Power", Role: "fire"},
 	},
 	"Time Lord's Regalia": {
-		{Pieces: 2, Note: "bolts stack Stolen Time haste (10)"},
-		{Pieces: 4, Note: "stacks cut Arcane Power/Combustion/Icy Veins CD"},
+		{Pieces: 2, EP: 198, Note: "bolts stack Stolen Time haste (10)", Role: "arcane"},
+		{Pieces: 2, EP: 274, Note: "bolts stack Stolen Time haste (10)", Role: "fire"},
+		{Pieces: 4, EP: 309, Note: "stacks cut Arcane Power/Combustion/Icy Veins CD", Role: "arcane"},
+		{Pieces: 4, EP: 196, Note: "stacks cut Arcane Power/Combustion/Icy Veins CD", Role: "fire"},
 	},
-
-	// =================== Warlock (notes only, EP 0) ====================
+	// affliction's T11 2pc speeds Haunt only — measured 0.01%
 	"Shadowflame Regalia": {
-		{Pieces: 2, Note: "Chaos Bolt/Hand of Gul'dan/Haunt cast -10%"},
-		{Pieces: 4, Note: "dots proc two 300% Fel Flames"},
+		{Pieces: 2, EP: 1, Note: "Chaos Bolt/Hand of Gul'dan/Haunt cast -10%", Role: "affliction"},
+		{Pieces: 2, EP: 89, Note: "Chaos Bolt/Hand of Gul'dan/Haunt cast -10%", Role: "demonology"},
+		{Pieces: 2, EP: 21, Note: "Chaos Bolt/Hand of Gul'dan/Haunt cast -10%", Role: "destruction"},
+		{Pieces: 4, EP: 126, Note: "dots proc two 300% Fel Flames", Role: "affliction"},
+		{Pieces: 4, EP: 65, Note: "dots proc two 300% Fel Flames", Role: "demonology"},
+		{Pieces: 4, EP: 107, Note: "dots proc two 300% Fel Flames", Role: "destruction"},
 	},
 	"Balespider's Burning Vestments": {
-		{Pieces: 2, Note: "Fiery Imp proc from periodic damage"},
-		{Pieces: 4, Note: "nuke proc: +20% shadow/fire for 8s"},
+		{Pieces: 2, EP: 193, Note: "Fiery Imp proc from periodic damage", Role: "affliction"},
+		{Pieces: 2, EP: 199, Note: "Fiery Imp proc from periodic damage", Role: "demonology"},
+		{Pieces: 2, EP: 208, Note: "Fiery Imp proc from periodic damage", Role: "destruction"},
+		{Pieces: 4, EP: 212, Note: "nuke proc: +20% shadow/fire for 8s", Role: "affliction"},
+		{Pieces: 4, EP: 267, Note: "nuke proc: +20% shadow/fire for 8s", Role: "demonology"},
+		{Pieces: 4, EP: 292, Note: "nuke proc: +20% shadow/fire for 8s", Role: "destruction"},
 	},
 	"Vestments of the Faceless Shroud": {
-		{Pieces: 2, Note: "Doomguard/Infernal +duration, -4min cooldown"},
-		{Pieces: 4, Note: "Soulburn +10% SP; Soul Fire refunds its shard"},
+		{Pieces: 2, EP: 226, Note: "Doomguard/Infernal +duration, -4min cooldown", Role: "affliction"},
+		{Pieces: 2, EP: 211, Note: "Doomguard/Infernal +duration, -4min cooldown", Role: "demonology"},
+		{Pieces: 2, EP: 216, Note: "Doomguard/Infernal +duration, -4min cooldown", Role: "destruction"},
+		{Pieces: 4, EP: 361, Note: "Soulburn +10% SP; Soul Fire refunds its shard", Role: "affliction"},
+		{Pieces: 4, EP: 404, Note: "Soulburn +10% SP; Soul Fire refunds its shard", Role: "demonology"},
+		{Pieces: 4, EP: 374, Note: "Soulburn +10% SP; Soul Fire refunds its shard", Role: "destruction"},
 	},
 
 	// =================== Priest (notes only, EP 0) =====================

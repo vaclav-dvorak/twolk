@@ -90,6 +90,10 @@ func LoadCata() (*Database, error) {
 			}
 		}
 	}
+	for id, e := range cataBespokeOnUse {
+		e := e
+		d.Effects[id] = append(d.Effects[id], &e)
+	}
 	d.pool = d.buildPool()
 	return d, nil
 }
@@ -120,6 +124,20 @@ var (
 	jarStacks = Effect{MaxStacks: 5, Callback: "OnHealDealt", ProcMask: "SpellHealing", Outcome: "Landed",
 		Cooldown: 2 * time.Second}
 )
+
+// cataBespokeOnUse adds the on-use half of a hand-rolled trinket the
+// dump carries only the proc of. Heart of Ignacious (other_effects.go
+// @ the pin): the use consumes the spell power stacks for 363 haste
+// each (321 normal), 20s, 2 min cooldown — at the 5 stacks it sits at,
+// a plain haste on-use. Without it the heart priced ~35% under the sim
+// for every caster (session 48). The ~10s it takes to rebuild the
+// consumed stacks is ignored.
+var cataBespokeOnUse = map[int]Effect{
+	59514: {ItemID: 59514, Name: "Heart's Judgement", Kind: EffectOnUse,
+		Bonus: Stats{MeleeHaste: 5 * 321}, Duration: 20 * time.Second, Cooldown: 2 * time.Minute},
+	65110: {ItemID: 65110, Name: "Heart's Judgement", Kind: EffectOnUse,
+		Bonus: Stats{MeleeHaste: 5 * 363}, Duration: 20 * time.Second, Cooldown: 2 * time.Minute},
+}
 
 // Consumable types in the cata dump's ConsumableType enum.
 const (

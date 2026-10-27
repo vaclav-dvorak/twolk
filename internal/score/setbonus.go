@@ -21,9 +21,11 @@ type SetBonus struct {
 	Pieces int
 	EP     float64
 	Note   string // short bonus description for the UI
-	// Role limits EP to profiles of that role ("cat"): sets shared by
-	// two roles of one tree (cata feral Battlegarb) are valued in one
-	// role's sim units only; others see the note with EP 0
+	// Role limits EP to one audience (Profile.SetBonusAudience): a role
+	// ("cat") for sets shared by two roles of one tree (cata feral
+	// Battlegarb), valued in that role's sim units only — others see the
+	// note with EP 0; or a tree slug ("arcane") for sets shared by two
+	// trees, each listing its own row per piece count (cata mage sets)
 	Role string
 }
 
@@ -318,7 +320,7 @@ func setCounts(ws []Worn) map[string]int {
 func (s *Scorer) SetBonusScore(ws []Worn) float64 {
 	var total float64
 	for name, n := range setCounts(ws) {
-		total += s.rules().bonusAt(name, n, s.prof.Role)
+		total += s.rules().bonusAt(name, n, s.prof.SetBonusAudience())
 	}
 	return total
 }
@@ -330,14 +332,15 @@ func (s *Scorer) setBonusSwapDelta(counts map[string]int, curSet, candSet string
 		return 0
 	}
 	r := s.rules()
+	aud := s.prof.SetBonusAudience()
 	var d float64
 	if curSet != "" {
 		n := counts[curSet]
-		d += r.bonusAt(curSet, n-1, s.prof.Role) - r.bonusAt(curSet, n, s.prof.Role)
+		d += r.bonusAt(curSet, n-1, aud) - r.bonusAt(curSet, n, aud)
 	}
 	if candSet != "" {
 		n := counts[candSet]
-		d += r.bonusAt(candSet, n+1, s.prof.Role) - r.bonusAt(candSet, n, s.prof.Role)
+		d += r.bonusAt(candSet, n+1, aud) - r.bonusAt(candSet, n, aud)
 	}
 	return d
 }

@@ -155,19 +155,30 @@ func (r *Rules) SetBonusesFor(setName string) []SetBonus {
 	return r.SetBonuses[setName]
 }
 
-// SetBonusesForRole is SetBonusesFor as a profile of the role sees it:
-// bonuses valued for another role carry EP 0 (see SetBonus.Role).
+// SetBonusesForRole is SetBonusesFor as a profile of the audience sees
+// it (Profile.SetBonusAudience): a bonus valued for another audience
+// carries EP 0 (see SetBonus.Role), and is dropped outright when the
+// set lists one valued for this audience at the same piece count.
 func (r *Rules) SetBonusesForRole(setName, role string) []SetBonus {
 	bs := r.SetBonuses[setName]
 	if bs == nil {
 		return nil
 	}
-	out := make([]SetBonus, len(bs))
-	for i, b := range bs {
+	own := map[int]bool{}
+	for _, b := range bs {
+		if b.Role != "" && b.Role == role {
+			own[b.Pieces] = true
+		}
+	}
+	out := make([]SetBonus, 0, len(bs))
+	for _, b := range bs {
 		if b.Role != "" && b.Role != role {
+			if own[b.Pieces] {
+				continue
+			}
 			b.EP = 0
 		}
-		out[i] = b
+		out = append(out, b)
 	}
 	return out
 }

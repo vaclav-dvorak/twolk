@@ -81,10 +81,11 @@ func (m Model) baseProfile() *score.Profile {
 	return m.game.FindProfile(m.char.Class, m.char.Spec(), m.char.TalentRanks)
 }
 
-// profileRole is the active profile's role ("" without one).
+// profileRole is the active profile's set-bonus audience: its role, or
+// its tree slug ("" without a profile).
 func (m Model) profileRole() string {
 	if p := m.baseProfile(); p != nil {
-		return p.Role
+		return p.SetBonusAudience()
 	}
 	return ""
 }

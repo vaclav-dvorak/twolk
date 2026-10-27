@@ -1,6 +1,9 @@
 package db
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 // curatedEffects hand-approximates items whose WoWSims implementation is
 // custom sim code we cannot mechanically extract (26 items upstream).
@@ -74,6 +77,14 @@ var cataCuratedEffects = []*Effect{
 	// have to be measured, not assumed.
 	{ItemID: 62051, Name: "Darkmoon Card: Hurricane", Kind: EffectCurated,
 		BonusDPS: 420},
+
+	// Moonwell Chalice — a plain on-use the upstream db.json carries no
+	// itemEffect for: the sim defines it in sim/common/cata/
+	// stat_bonus_cds.go (@ the pin), which the cata loader does not read
+	// (it is the only item there the dump lacks). +1700 mastery for 20s,
+	// 2 min cooldown. Not an average: the on-use model prices it.
+	{ItemID: 70142, Name: "Moonwell Chalice", Kind: EffectOnUse,
+		Bonus: Stats{Mastery: 1700}, Duration: 20 * time.Second, Cooldown: 2 * time.Minute},
 }
 
 // overlayCurated adds a curated table's estimates for items that have no

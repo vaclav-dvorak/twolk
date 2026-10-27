@@ -584,6 +584,16 @@ func Slug(name string) string {
 // Key returns the profile's stable config key, e.g.
 // "wotlk/hunter/survival" — game-prefixed so same-named specs of
 // different versions never share user overrides.
+// SetBonusAudience is what a role-scoped set bonus (SetBonus.Role)
+// matches against: the profile's role, or its tree's slug when it has
+// none.
+func (p *Profile) SetBonusAudience() string {
+	if p.Role != "" {
+		return p.Role
+	}
+	return Slug(p.Tree)
+}
+
 func (p *Profile) Key() string {
 	k := p.rules().Game + "/" + p.Class.Slug() + "/" + Slug(p.Tree)
 	if p.Role != "" {

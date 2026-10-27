@@ -246,6 +246,8 @@ var profiles = []*score.Profile{
 		hunterWeights(0.5, 3.27, 1.0, svHitEP, 1.17, 0.89, 0.88), 3.75),
 	balanceProfile, catProfile, bearProfile, restoProfile,
 	armsProfile, furyTGProfile, furySMFProfile, protProfile,
+	arcaneProfile, fireProfile,
+	afflictionProfile, demonologyProfile, destructionProfile,
 }
 
 // findProfileFor resolves the profile with the import's exact talent

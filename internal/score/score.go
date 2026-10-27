@@ -274,6 +274,11 @@ type Profile struct {
 	// every chance-based proc's uptime, so set it from measurement.
 	ProcInterval time.Duration
 
+	// NoPeriodicDamage marks a rotation that deals no periodic damage
+	// (arcane mage: Arcane Blast and Missiles never tick in the sim), so
+	// procs that fire ONLY on periodic damage never fire for it.
+	NoPeriodicDamage bool
+
 	// Filters for upgrade proposals (zero values = no filter).
 	ArmorType   db.ArmorType // only this armor class on armor slots
 	WeaponTypes []db.WeaponType
