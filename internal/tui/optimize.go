@@ -104,7 +104,7 @@ func (m Model) optGemLines(rows []gearRow, ws []score.Worn, cols cmpCols) []stri
 		lines = append(lines, m.optItemHeader(it, t.Delta))
 		// one line per socket change, no per-gem stat rows
 		for _, ch := range t.Changes {
-			sock := ""
+			var sock string
 			if ch.SocketIdx < len(it.GemSockets) {
 				c := it.GemSockets[ch.SocketIdx]
 				sock = gemColorStyle(c).Render("◆") + dimStyle.Render(" "+c.String()+": ")

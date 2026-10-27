@@ -34,7 +34,7 @@ func TestTrinketEPvsSim(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prof := findProfile(db.ClassHunter, "Survival")
+	prof := findProfileFor(db.ClassHunter, "Survival", nil)
 	prof.Caps = prof.EffectiveCaps(nil)
 
 	set := make([]*db.Item, 0, len(p1SVPreset))
@@ -134,7 +134,7 @@ func TestCapReachedByReforgingStopsHitGems(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	prof := findProfile(db.ClassHunter, "Survival")
+	prof := findProfileFor(db.ClassHunter, "Survival", nil)
 	prof.Caps = prof.EffectiveCaps(nil)
 	var set []*db.Item
 	for _, id := range p1SVPreset {

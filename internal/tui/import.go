@@ -48,21 +48,21 @@ func (m Model) importSelection() realmRow {
 	return rows[min(max(m.impCursor, 0), len(rows)-1)]
 }
 
-// homeRow finds the active character's home in the realm registry —
-// the row the refresh flow (r) operates on.
-func (m Model) homeRow() (realmRow, int, bool) {
+// homeRow finds the index of the active character's home in the realm
+// registry — the row the refresh flow (r) operates on.
+func (m Model) homeRow() (int, bool) {
 	i := m.cfg.ActiveChar
 	if m.char == nil || i < 0 || i >= len(m.cfg.Chars) {
-		return realmRow{}, 0, false
+		return 0, false
 	}
 	sc := m.cfg.Chars[i]
 	for j, row := range m.realmRows() {
 		if row.game.Slug == sc.Game && row.server.Slug == sc.Server &&
 			strings.EqualFold(row.realm, sc.Realm) {
-			return row, j, true
+			return j, true
 		}
 	}
-	return realmRow{}, 0, false
+	return 0, false
 }
 
 func (m Model) updateImport(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -151,7 +151,7 @@ func (m Model) addCharacter() (tea.Model, tea.Cmd) {
 // name and realm are fixed, so the modal has no text field and a paste
 // can only be the export. Fetch servers start fetching at once.
 func (m Model) startRefresh() (Model, tea.Cmd) {
-	_, j, ok := m.homeRow()
+	j, ok := m.homeRow()
 	if !ok {
 		return m, nil
 	}

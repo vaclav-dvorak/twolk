@@ -13,7 +13,7 @@ import (
 // epics in the data must NOT be assumed), JC Chimera's Eyes, and the
 // hunter enchant pick.
 func TestSurvivalScoring(t *testing.T) {
-	p := findProfile(db.ClassHunter, "Survival")
+	p := findProfileFor(db.ClassHunter, "Survival", nil)
 	if p == nil {
 		t.Fatal("no survival profile")
 	}
@@ -102,7 +102,7 @@ func TestUpgradeProposals(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	p := findProfile(db.ClassHunter, "Survival")
+	p := findProfileFor(db.ClassHunter, "Survival", nil)
 	prof := *p
 	prof.Caps = p.EffectiveCaps(nil)
 	s := score.New(d, &prof)

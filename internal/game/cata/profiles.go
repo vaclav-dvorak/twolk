@@ -248,12 +248,6 @@ var profiles = []*score.Profile{
 	armsProfile, furyTGProfile, furySMFProfile, protProfile,
 }
 
-// findProfile resolves the build profile for a class and talent tree
-// without talent detail (feral reads as cat, Balance of Power as 2/2).
-func findProfile(class db.Class, tree string) *score.Profile {
-	return findProfileFor(class, tree, nil)
-}
-
 // findProfileFor resolves the profile with the import's exact talent
 // ranks: a feral with bear-only talents is the bear tank, and a balance
 // druid's spirit converts to hit at the Balance of Power rank taken.

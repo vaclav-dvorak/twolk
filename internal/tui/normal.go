@@ -42,7 +42,7 @@ func (m Model) updateNormal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.impStep = 0
 		m.impName.Blur()
 		m.impName.SetValue("")
-		if _, j, ok := m.homeRow(); ok {
+		if j, ok := m.homeRow(); ok {
 			m.impCursor = j // the home realm is still the likeliest pick
 		}
 		return m, nil

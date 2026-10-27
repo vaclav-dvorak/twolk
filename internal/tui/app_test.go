@@ -706,7 +706,7 @@ func TestWeightsEditor(t *testing.T) {
 	}
 
 	// close saves; a fresh model restores the agility override
-	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEsc})
+	drive(t, m, tea.KeyMsg{Type: tea.KeyEsc})
 	fresh, err := config.Load()
 	if err != nil {
 		t.Fatal(err)
