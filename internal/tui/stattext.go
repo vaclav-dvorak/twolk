@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -99,6 +100,10 @@ func (m Model) statLines(s db.Stats, include func(db.Stat) bool) []string {
 		if !merged {
 			label = st.String()
 		}
+		if per, ok := m.game.Rules.PercentRating[st]; ok {
+			out = append(out, fmt.Sprintf("%+g%% %s", round2(v/per), label))
+			continue
+		}
 		out = append(out, fmt.Sprintf("%+.0f %s", v, label))
 	}
 	return out
@@ -107,11 +112,22 @@ func (m Model) statLines(s db.Stats, include func(db.Stat) bool) []string {
 // effectLines renders one item effect as a headline plus a dim detail line.
 func (m Model) effectLines(e *db.Effect) []string {
 	bonus := strings.Join(m.statLines(e.Bonus, nil), ", ")
+	// a stat-less effect (absorb, summon, extra attack) is named, not
+	// priced: say so, or a 0 score reads as a bug
+	unpriced := ""
+	if bonus == "" {
+		bonus = e.Name
+		unpriced = " · not scored"
+	}
 	switch e.Kind {
 	case db.EffectOnUse:
+		timing := fmt.Sprintf("  %s cooldown", fmtDur(e.Cooldown))
+		if e.Duration > 0 {
+			timing = fmt.Sprintf("  %s, %s cooldown", fmtDur(e.Duration), fmtDur(e.Cooldown))
+		}
 		return []string{
 			okStyle.Render("Use: ") + bonus,
-			dimStyle.Render(fmt.Sprintf("  %s, %s cooldown", fmtDur(e.Duration), fmtDur(e.Cooldown))),
+			dimStyle.Render(timing + unpriced),
 		}
 	case db.EffectProc:
 		var cond []string
@@ -130,14 +146,15 @@ func (m Model) effectLines(e *db.Effect) []string {
 		if e.Cooldown > 0 {
 			cond = append(cond, fmtDur(e.Cooldown)+" ICD")
 		}
-		detail := dimStyle.Render("  " + strings.Join(cond, ", "))
+		detail := dimStyle.Render("  " + strings.Join(cond, ", ") + unpriced)
 		if m.scorer != nil && !m.scorer.Profile().CanTrigger(e) {
 			detail += errStyle.Render(" — unreachable")
 		}
-		return []string{
-			okStyle.Render("Proc: ") + bonus + dimStyle.Render(" for "+fmtDur(e.Duration)),
-			detail,
+		head := okStyle.Render("Proc: ") + bonus
+		if e.Duration > 0 {
+			head += dimStyle.Render(" for " + fmtDur(e.Duration))
 		}
+		return []string{head, detail}
 	case db.EffectCurated:
 		return []string{
 			okStyle.Render("Proc (avg value): ") + bonus,
@@ -190,3 +207,7 @@ func gemText(g *db.Gem) string {
 func enchantText(name string) string {
 	return enchantStyle.Render("[ " + name + " ]")
 }
+
+// round2 keeps two decimals of a percentage (a ½% crit line reads
+// "+0.5%", not "+0.5000000001%").
+func round2(v float64) float64 { return math.Round(v*100) / 100 }

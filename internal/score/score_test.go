@@ -582,7 +582,7 @@ func TestCapTalentTable(t *testing.T) {
 	if bop.Stat != db.SpellHit || bop.RatingPerPoint != 2*SpellHitRatingPerPct {
 		t.Errorf("Balance of Power wrong: %+v", bop)
 	}
-	if RacialHitPct("Draenei") != 1 || RacialHitPct("Troll") != 0 {
+	if WotLK.RacialHitPct("Draenei") != 1 || WotLK.RacialHitPct("Troll") != 0 {
 		t.Error("racial hit table wrong")
 	}
 }

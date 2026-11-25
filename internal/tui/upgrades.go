@@ -92,6 +92,17 @@ func (m Model) updateUpgrades(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		pane := m.viewCompare(m.gearRows()[m.upSlot].worn(), m.upList[cursor].Item)
 		m.upPaneOff = m.scrollInfoPane(msg.String(), m.upPaneOff, min(len(m.upList), 10), pane)
 		return m, nil
+	case "e":
+		// toggle the enchant assumption: rescore candidates (and the
+		// tips, which share it) with or without their best enchant
+		on := !m.assumeEnchants()
+		m.enchAssume = &on
+		if m.scorer != nil {
+			m.scorer.SetEnchantGate(m.enchantGate())
+			m.recomputeUpgrades()
+			m.recomputeTips()
+		}
+		return m, nil
 	case "f":
 		m.mode = modeFilter
 		m.fromUps, m.fromBis = true, false
@@ -106,10 +117,14 @@ func (m Model) viewUpgrades() string {
 	cur := curRow.item
 
 	header := m.viewHeader()
+	ench := "no enchants"
+	if m.assumeEnchants() {
+		ench = "best enchants"
+	}
 	context := titleStyle.Render("▸ Upgrades — "+cur.Slot.String()) +
-		"   " + dimStyle.Render(m.filterSummary())
+		"   " + dimStyle.Render(m.filterSummary()+" · "+ench)
 
-	help := helpLine("↑/↓", "select", "f", "filter", "esc", "back")
+	help := helpLine("↑/↓", "select", "e", "enchants", "f", "filter", "esc", "back")
 
 	if len(m.upList) == 0 {
 		return m.pinFooter(lipgloss.JoinVertical(lipgloss.Left, header, "", context, "",
@@ -171,12 +186,9 @@ func (m Model) viewUpgrades() string {
 		case u.Item.ILvl < cur.ILvl:
 			ilvl = sel(errStyle).Render(fmt.Sprintf("%3d↓", u.Item.ILvl))
 		}
-		src := m.sourceText(u.Item)
-		if i == cursor {
-			// the source text carries its own inner styles; flatten it so
-			// the highlight bar runs through it uninterrupted
-			src = sel(dimStyle).Render(ansi.Strip(src))
-		}
+		// styled per span under the highlight: the bar runs through
+		// uninterrupted and the inner colors survive the cursor
+		src := m.sourceTextSel(u.Item, sel)
 		deltaCell := sel(okStyle).Render(fmt.Sprintf(" ▲%5.0f ", u.Delta))
 		if u.Delta <= 0.5 {
 			deltaCell = sel(errStyle).Render(fmt.Sprintf(" ▼%5.0f ", u.Delta))

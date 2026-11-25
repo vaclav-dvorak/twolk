@@ -129,13 +129,11 @@ var ClassicTreeOrder = map[db.Class][3]string{
 	db.ClassDruid:       {"Balance", "Feral Combat", "Restoration"},
 }
 
-// RacialHitPct returns the passive hit% a race grants (Draenei Heroic
-// Presence, which applies to melee, ranged and spells alike).
-func RacialHitPct(race string) float64 {
-	if race == "Draenei" {
-		return 1
-	}
-	return 0
+// RacialHitPct is the hit% a race's racial grants under the version's
+// rules (WotLK/Cata Draenei Heroic Presence, Forever Dwarf Artisan's
+// Precision); 0 for races without one.
+func (r *Rules) RacialHitPct(race string) float64 {
+	return r.RacialHit[race]
 }
 
 // HitCapSpec declares that a profile's build is hit-capped: Stat is the

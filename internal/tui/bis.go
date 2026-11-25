@@ -7,7 +7,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 
 	"github.com/vaclav-dvorak/twolk/internal/db"
 	"github.com/vaclav-dvorak/twolk/internal/score"
@@ -401,10 +400,7 @@ func (m Model) viewBis() string {
 				}
 				deltaCell = sel(st).Render(fmt.Sprintf("%+6.0f ", d))
 			}
-			tail = m.sourceText(it)
-			if i == cursor {
-				tail = sel(dimStyle).Render(ansi.Strip(tail))
-			}
+			tail = m.sourceTextSel(it, sel)
 		}
 		row := mark +
 			sel(dimStyle).Render(fmt.Sprintf("%-10s", m.bisSlotLabel(i))) +

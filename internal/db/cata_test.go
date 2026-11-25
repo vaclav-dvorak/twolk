@@ -473,7 +473,7 @@ func TestCataRepSources(t *testing.T) {
 				continue
 			}
 			repItems++
-			if s.Rep.FactionName() == "" {
+			if d.FactionName(s.Rep.FactionID) == "" {
 				t.Errorf("%s (%d): rep faction %d has no curated name", it.Name, it.ID, s.Rep.FactionID)
 			}
 			if s.Rep.Standing() == "" {
@@ -497,7 +497,7 @@ func TestCataRepSources(t *testing.T) {
 			rep = s.Rep
 		}
 	}
-	if rep == nil || rep.FactionName() != "The Earthen Ring" || rep.Standing() != "Exalted" {
+	if rep == nil || d.FactionName(rep.FactionID) != "The Earthen Ring" || rep.Standing() != "Exalted" {
 		t.Fatalf("Signet of the Elder Council rep source = %+v, want The Earthen Ring / Exalted", rep)
 	}
 }

@@ -313,9 +313,10 @@ func (m Model) saveImport() (tea.Model, tea.Cmd) {
 		m.errMsg = fmt.Sprintf("export is for %s, not %s", char.Name, m.char.Name)
 		return m, nil
 	}
-	// endgame only: weights, caps and the candidate pool all assume
-	// a max-level character, so anything else would just mislead
-	if char.Level != sel.game.PlayerLevel {
+	// endgame only (unless the version supports leveling): weights,
+	// caps and the candidate pool all assume a max-level character, so
+	// anything else would just mislead
+	if char.Level != sel.game.PlayerLevel && !(sel.game.Leveling && char.Level < sel.game.PlayerLevel) {
 		m.errMsg = fmt.Sprintf("%s is level %d — only level %d characters are supported",
 			char.Name, char.Level, sel.game.PlayerLevel)
 		return m, nil

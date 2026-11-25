@@ -2,11 +2,11 @@
 
 # ⚔️ twolk
 
-**A terminal gear planner for World of Warcraft private servers**<br>
+**A terminal gear planner for World of Warcraft: Forever and private servers**<br>
 in the spirit of Ask Mr. Robot
 
 [![Release](https://img.shields.io/github/v/release/vaclav-dvorak/twolk?style=flat-square)](https://github.com/vaclav-dvorak/twolk/releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/license-GPLv3-blue?style=flat-square)](LICENSE)
 ![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey?style=flat-square)
 
 </div>
@@ -25,6 +25,7 @@ count. Then it:
 |---|---|---|
 | 🧊 **WotLK 3.3.5a** (legacy) | Warmane: Onyxia, Icecrown | 📋 paste (browser export) |
 | 🔥 **Cataclysm 4.4.2** (classic) | Whitemane: Gilneas | ⚡ fetched directly from the armory API |
+| 🌀 **WoW: Forever 1.60** (official) | Blizzard: EU, US | ⚡ fetched from the official armory |
 
 **WotLK:** all 10 classes, every talent tree.
 
@@ -41,9 +42,18 @@ count. Then it:
 Other Cataclysm classes import and show their gear, but they aren't
 scored yet.
 
+**WoW: Forever** scores 🏹 hunters (Beast Mastery, Marksmanship,
+Survival) at **any level**: below 60 twolk proposes only what you can
+wear now (required level, armor class), marks crafts *craftable by
+yourself* or *buy on AH*, and leaves enchants out of the comparison
+(`e` in the upgrade screen toggles them). Other Forever classes import
+and show their gear.
+
 🗓️ **Raid phases** for the upgrade filter:
 - **WotLK:** Naxx (T7), Ulduar (T8), ToC (T9), ICC (T10), Ruby Sanctum.
 - **Cataclysm:** T11, Zandalari, Firelands (T12), Dragon Soul (T13).
+- **Forever:** launch content; the item database follows the game and
+  updates with every twolk release.
 
 ## ✨ Features
 
@@ -100,9 +110,14 @@ Adding a character takes a realm and a name; its gear always comes in
 through a **refresh**, which opens right after you add it (and later
 with `r`).
 
-1. Pick the realm (for example **Whitemane — Gilneas** or
-   **Warmane — Onyxia**) and press `enter`.
-2. Type the character name and press `enter`.
+1. Pick the realm (for example **Whitemane — Gilneas**,
+   **Warmane — Onyxia** or **Blizzard — EU**) and press `enter`.
+2. Type the character name and press `enter`. Forever characters have
+   two names: type both, for example `Brannoc Ironvale`.
+
+**🌀 Blizzard (Forever):** the refresh reads the character from the
+official armory page straight away: gear, enchants, exact talents and
+professions. Characters of any level import.
 
 **🔥 Whitemane (Cataclysm):** the refresh fetches the character from the
 armory straight away. It picks up gear, gems, enchants, reforges, exact
@@ -149,12 +164,17 @@ Character data stays on your machine.
   Cataclysm hunter, druid, warrior, mage and warlock stat weights,
   trinket procs and tier bonuses were checked by running the WoWSims
   cata simulator. Thank you to the WoWSims team.
+- **[wowsims/forever](https://github.com/wowsims/forever)** (MIT)
+  supplies the World of Warcraft: Forever item database; Forever hunter
+  stat weights were measured by running its simulator.
+- **[QuestieDB](https://github.com/Questie/QuestieDB)** supplies which
+  Forever items drop in the open world (used under GPLv3).
 - **[AzerothCore](https://github.com/azerothcore/azerothcore-wotlk)**
   and **[TrinityCore](https://github.com/TrinityCore/TrinityCore)**
   world databases supply vendor prices, recipe sources and 3.3.5 stat
   corrections.
 - **[wago.tools](https://wago.tools)** supplies the client data tables
-  for currency costs.
+  for currency costs and Forever recipe skill levels.
 - **[Wowhead](https://www.wowhead.com)** and
   **[wotlkdb.com](https://wotlkdb.com)** supply item sources and
   vendor inventories, taken from bulk data dumps rather than scraped
@@ -164,8 +184,10 @@ The generators that build the `*_gen.go` tables live in `tools/`.
 
 ## 📄 License
 
-MIT. See [LICENSE](LICENSE). The bundled WoWSims data stays under the
-WoWSims MIT license.
+GNU GPL v3. See [LICENSE](LICENSE). Copyright (C) 2026 Vaclav Dvorak.
+The bundled WoWSims data stays under the WoWSims MIT license;
+QuestieDB-derived tables are used under the GPLv3 terms the Questie team
+offers.
 
 World of Warcraft is a trademark of Blizzard Entertainment. twolk is a
 fan project and isn't affiliated with Blizzard, WoWSims or any private

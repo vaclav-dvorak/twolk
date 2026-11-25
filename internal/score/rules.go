@@ -50,6 +50,10 @@ type Rules struct {
 	// Cataclysm casters gear the full unreduced cap.
 	SpellHitDebuffPct float64
 
+	// RacialHit maps races to the flat hit% their racial grants (it
+	// lowers the hit cap, see RacialHitPct).
+	RacialHit map[string]float64
+
 	// WeaponRacials are race bonuses tied to a weapon type, as virtual
 	// gear stats (already converted with this version's ratings).
 	WeaponRacials []WeaponRacial
@@ -63,6 +67,12 @@ type Rules struct {
 	// database's own table is merged with it. Empty on both sides
 	// leaves scoring unbuffed — the behavior before consumables.
 	Consumables []db.Consumable
+
+	// PercentRating maps stats the game states as PERCENTAGES ("+1%
+	// crit") to the fixed rating the data stores per 1% (Forever: 14
+	// crit per 1%); displays show those stats as percentages. nil for
+	// rating-based versions.
+	PercentRating map[db.Stat]float64
 
 	// Stats lists the canonical stats this version's data can carry —
 	// what the weights editor offers and marginal displays show.
@@ -99,6 +109,7 @@ var WotLK = &Rules{
 	CapTalents:           capTalents,
 	TreeOrder:            ClassicTreeOrder,
 	SpellHitDebuffPct:    3,
+	RacialHit:            map[string]float64{"Draenei": 1}, // Heroic Presence
 	WeaponRacials:        wotlkWeaponRacials,
 	BuckleName:           BuckleName,
 	Consumables:          wotlkConsumables(),

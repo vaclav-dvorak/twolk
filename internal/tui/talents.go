@@ -98,7 +98,7 @@ func (m Model) capReductions() map[db.Stat]float64 {
 	for _, t := range m.game.Rules.CapTalentsFor(m.char.Class) {
 		red[t.Stat] += float64(m.talentPoints(t)) * t.RatingPerPoint
 	}
-	if r := score.RacialHitPct(m.char.Race); r > 0 {
+	if r := m.game.Rules.RacialHitPct(m.char.Race); r > 0 {
 		red[db.MeleeHit] += r * m.game.Rules.MeleeHitRatingPerPct
 		red[db.SpellHit] += r * m.game.Rules.SpellHitRatingPerPct
 	}
@@ -231,7 +231,7 @@ func (m Model) viewTalents() string {
 	}
 
 	var notes []string
-	if r := score.RacialHitPct(m.char.Race); r > 0 {
+	if r := m.game.Rules.RacialHitPct(m.char.Race); r > 0 {
 		notes = append(notes, okStyle.Render(fmt.Sprintf("+%g%% hit", r))+
 			dimStyle.Render(" from "+m.char.Race+" racial (applied automatically)"))
 	}

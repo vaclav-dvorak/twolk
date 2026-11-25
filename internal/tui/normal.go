@@ -87,7 +87,7 @@ func (m Model) updateNormal(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "p":
-		if m.scorer != nil && len(m.gearRows()) > 0 {
+		if m.hasEmblems() && m.scorer != nil && len(m.gearRows()) > 0 {
 			m.openEmblems()
 		}
 		return m, nil
@@ -157,12 +157,16 @@ func (m Model) viewNormal() string {
 	if m.char != nil {
 		refreshHelp = helpLine("r", "refresh") + "  "
 	}
+	emblemsHelp := ""
+	if m.hasEmblems() {
+		emblemsHelp = helpLine("p", "emblems") + "  "
+	}
 	help := helpLine("↑/↓", "select", "enter", "upgrades", "f", "filter") + "  " +
 		talentsHelp +
 		helpKey.Render("w") + helpDesc.Render(" weights  ") +
 		helpKey.Render("o") + helpDesc.Render(" optimize  ") +
 		helpKey.Render("b") + helpDesc.Render(" bis  ") +
-		helpKey.Render("p") + helpDesc.Render(" emblems  ") +
+		emblemsHelp +
 		helpKey.Render("i") + helpDesc.Render(" add  ") +
 		refreshHelp +
 		helpKey.Render("c") + helpDesc.Render(" chars  ") +
@@ -199,7 +203,8 @@ func (m Model) viewGear() string {
 	// nothing, so those rows stay yellow and the legend drops the entry
 	ranksLowest := false
 	for _, r := range rows {
-		if float64(r.item.ILvl) < math.Round(avg) && r.item.ILvl > lowest {
+		// an empty slot always ranks: nothing is worse than nothing
+		if r.empty || (float64(r.item.ILvl) < math.Round(avg) && r.item.ILvl > lowest) {
 			ranksLowest = true
 		}
 	}
@@ -218,6 +223,16 @@ func (m Model) viewGear() string {
 		// marker column: single-width glyphs only — emoji render at
 		// different widths across terminals/fonts and break alignment
 		marker := sel(lipgloss.NewStyle()).Render("  ")
+		if r.empty {
+			row := sel(errStyle).Render("▲ ") + sel(lipgloss.NewStyle()).Render(fmt.Sprintf("%-9s ", it.Slot)) +
+				sel(dimStyle).Render(fmt.Sprintf("%4d", 0)) + sel(lipgloss.NewStyle()).Render("  ") +
+				sel(errStyle).Render("unequipped")
+			if pad := leftW - lipgloss.Width(row); pad > 0 {
+				row += sel(lipgloss.NewStyle()).Render(strings.Repeat(" ", pad))
+			}
+			lines = append(lines, row)
+			continue
+		}
 		switch {
 		case m.scorer != nil && !upgradeable[i]:
 			marker = sel(bisStyle).Render("✓ ")
@@ -501,6 +516,13 @@ func (m Model) setBonusLines(rows []gearRow, width int) []string {
 func (m Model) viewItemDetail(rows []gearRow, idx int) string {
 	it := rows[idx].item
 	eq := rows[idx].equipped
+	if rows[idx].empty {
+		hint := "nothing equipped"
+		if m.scorer != nil {
+			hint += " — enter lists what fits"
+		}
+		return dimStyle.Render(it.Slot.String() + "\n\n" + hint)
+	}
 	name := m.itemLabel(it, rowStyler(false))
 	meta := fmt.Sprintf("%s · ilvl %d", it.Slot, it.ILvl)
 	if m.scorer != nil {

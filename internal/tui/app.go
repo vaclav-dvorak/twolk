@@ -151,8 +151,12 @@ type Model struct {
 	optPlan   score.OptimizePlan // joint gem/enchant/reforge plan, see openOptimize
 	optNote   string             // confirmation line inside the optimization advisor
 	optOff    int                // advisor body scroll offset (the plan can outgrow the screen)
-	embList   []emblemBuy        // emblem advisor rows, see openEmblems
-	embOff    int                // emblem advisor scroll offset
+	// enchAssume overrides whether candidates are scored with their
+	// best enchant assumed (e in the upgrade browser); nil = the
+	// default, see assumeEnchants
+	enchAssume *bool
+	embList    []emblemBuy // emblem advisor rows, see openEmblems
+	embOff     int         // emblem advisor scroll offset
 
 	bisSet     []*db.Item    // BiS picks, aligned with bisWorn, see openBis
 	bisWorn    []score.Worn  // solver baseline: worn rows re-dealt onto the winning weapon layout
@@ -179,6 +183,11 @@ type gearRow struct {
 	// rollGuess marks a random-suffix item whose roll the import does
 	// not name: item is the planner's assumption (see wornRoll)
 	rollGuess bool
+	// empty marks an unfilled slot of a leveling character: item is a
+	// stat-less, ilvl-0 stand-in for "nothing", so the slot is
+	// selectable, every candidate reads as an upgrade over it, and the
+	// list flags it as the set's weakest link
+	empty bool
 }
 
 // worn converts a row to a scoring instance.
@@ -214,6 +223,9 @@ func (m *Model) newScorer() *score.Scorer {
 	}
 	prof := *p
 	prof.Caps = p.EffectiveCaps(m.capReductions())
+	if m.game.ArmorAt != nil {
+		prof.ArmorType = m.game.ArmorAt(m.char.Class, m.char.Level)
+	}
 	// user stat-weight overrides, resolved onto the side the profile
 	// reads (twin-stat discipline preserved)
 	if ov := m.cfg.Weights[p.Key()]; len(ov) > 0 {
@@ -276,6 +288,36 @@ func (m Model) gearRows() []gearRow {
 		if it, ok := m.game.DB.Items[eq.ItemID]; ok {
 			it, guess := m.wornRoll(eq, it)
 			rows = append(rows, gearRow{equipped: eq, item: it, rollGuess: guess})
+		}
+	}
+	if m.game.Leveling {
+		rows = m.withEmptySlots(rows)
+	}
+	return rows
+}
+
+// withEmptySlots adds a selectable empty row for every standard slot
+// the worn gear leaves open — a leveling character has open slots to
+// fill, and the upgrade browser needs a row to browse from. A slot
+// whose worn item the db can't resolve keeps its "unscored" note
+// instead: it isn't empty.
+func (m Model) withEmptySlots(rows []gearRow) []gearRow {
+	count := map[db.Slot]int{}
+	for _, r := range rows {
+		count[r.item.Slot]++
+	}
+	for _, g := range m.gaps {
+		count[g.slot]++
+	}
+	for _, std := range score.StandardSlots {
+		for n := count[std.Slot]; n < std.N; n++ {
+			at := ghostAt(rows, std.Slot)
+			empty := gearRow{
+				item:     &db.Item{Slot: std.Slot},
+				equipped: armory.EquippedItem{HasDetail: true}, // nothing assumed
+				empty:    true,
+			}
+			rows = append(rows[:at], append([]gearRow{empty}, rows[at:]...)...)
 		}
 	}
 	return rows
@@ -484,6 +526,8 @@ func ilvlStats(rows []gearRow) float64 {
 	if len(rows) == 0 {
 		return 0
 	}
+	// an empty slot counts as item level 0, as the armory's average
+	// does (empty rows are stat-less stand-ins with ILvl 0)
 	sum := 0
 	for _, r := range rows {
 		sum += r.item.ILvl

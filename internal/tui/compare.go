@@ -86,9 +86,15 @@ type cmpCols struct {
 	hideSame                bool
 }
 
-func (c cmpCols) cell(v float64, w int) string {
+func (c cmpCols) cell(v float64, w int) string { return c.cellAs(v, w, false) }
+
+// cellAs renders a value cell, as a percentage when pct.
+func (c cmpCols) cellAs(v float64, w int, pct bool) string {
 	if v == 0 {
 		return dimStyle.Render(fmt.Sprintf("%*s", w, "—"))
+	}
+	if pct {
+		return fmt.Sprintf("%*s", w, fmt.Sprintf("%g%%", round2(v)))
 	}
 	return fmt.Sprintf("%*.0f", w, v)
 }
@@ -170,9 +176,15 @@ func (c cmpCols) table(m Model, l, r db.Stats, val func(sts []db.Stat, from, to 
 		if c.hideSame && d == 0 {
 			continue
 		}
+		// percent stats (Forever) display as % but score on the raw
+		// values: val gets the unscaled pair
+		shown, format, l, r := 1.0, "%+.0f", row.l, row.r
+		if per, ok := m.game.Rules.PercentRating[row.sts[0]]; ok {
+			shown, format = per, "%+g%%"
+		}
 		out = append(out, fmt.Sprintf("%-*s", c.labelW, row.label)+
-			c.cell(row.l, c.lw)+c.signed(d, c.gw, "%+.0f")+
-			c.signed(val(row.sts, row.l, row.r), c.epW, "%+.0f")+c.cell(row.r, c.rw))
+			c.cellAs(l/shown, c.lw, shown != 1)+c.signed(round2(d/shown), c.gw, format)+
+			c.signed(val(row.sts, l, r), c.epW, "%+.0f")+c.cellAs(r/shown, c.rw, shown != 1))
 	}
 	return out
 }
@@ -209,6 +221,9 @@ func (m Model) viewCompare(cur score.Worn, cand *db.Item) string {
 	// candidate name
 	name := func(it *db.Item, worn bool) string {
 		s := m.itemLabel(it, rowStyler(false)) + dimStyle.Render(fmt.Sprintf("  ilvl %d", it.ILvl))
+		if worn && it.ID == 0 { // an empty slot's stand-in (withEmptySlots)
+			s = dimStyle.Render("nothing")
+		}
 		if worn {
 			return dimStyle.Render("equipped: ") + s
 		}

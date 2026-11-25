@@ -136,6 +136,9 @@ func (m Model) viewCapsTotals(tot db.Stats) string {
 			label = s
 		}
 		text := fmt.Sprintf("%s %.0f/%.0f", label, v, c.Cap)
+		if per, ok := m.game.Rules.PercentRating[c.Stat]; ok {
+			text = fmt.Sprintf("%s %g%%/%g%%", label, round2(v/per), round2(c.Cap/per))
+		}
 		if c.Stat == db.Expertise {
 			// gear carries expertise RATING; the in-game sheet shows
 			// floored POINTS (8.1975 rating each, dodge cap 26)

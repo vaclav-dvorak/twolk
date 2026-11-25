@@ -78,16 +78,52 @@ func (m Model) recipeLocked(spellID int) bool {
 	return ok && r.Kind == db.RecipeVendor && m.zoneLocked(r.Zone)
 }
 
+// assumeEnchants reports whether candidates are scored with their best
+// enchant applied. By default only at max level: nobody enchants
+// leveling gear they replace in a few levels, so a bare candidate
+// against the worn (really enchanted) piece is the honest comparison.
+// The upgrade browser's e key overrides it for the session.
+func (m Model) assumeEnchants() bool {
+	if m.enchAssume != nil {
+		return *m.enchAssume
+	}
+	return !(m.game.Leveling && m.char != nil && m.char.Level < m.game.PlayerLevel)
+}
+
 // enchantGate is the scorer's enchant predicate for the active filter:
 // item-based enchants (scopes) whose recipe sits behind a closed unlock
-// are off the realm. nil when every unlock is open.
+// are off the realm, and a leveling character only gets enchants of its
+// level; with the enchant assumption off, none pass. nil when nothing
+// gates.
 func (m Model) enchantGate() func(*db.Enchant) bool {
-	if len(m.filter.Locked) == 0 || m.game.DB == nil {
+	if m.game.DB == nil {
+		return nil
+	}
+	if !m.assumeEnchants() {
+		return func(*db.Enchant) bool { return false }
+	}
+	level := 0
+	if m.game.Leveling && m.char != nil && m.char.Level < m.game.PlayerLevel {
+		level = m.char.Level
+	}
+	if len(m.filter.Locked) == 0 && level == 0 {
 		return nil
 	}
 	mc := m // the gate must not follow later filter edits
 	mc.filter.Locked = slices.Clone(m.filter.Locked)
+	maxLevel := m.game.PlayerLevel
 	return func(e *db.Enchant) bool {
+		if level > 0 {
+			// no level upstream: endgame content (Forever's Warden's
+			// Signets), off the table until max level
+			need := e.ReqLevel
+			if need == 0 {
+				need = maxLevel
+			}
+			if need > level {
+				return false
+			}
+		}
 		r, ok := mc.game.DB.EnchantRecipe(e)
 		return !ok || r.Kind != db.RecipeVendor || !mc.zoneLocked(r.Zone)
 	}
@@ -113,6 +149,10 @@ func (m *Model) loadFilter() {
 func (m Model) allowItem(it *db.Item) bool {
 	f := m.filter
 	if it.ILvl < m.game.MinUsefulILvl {
+		return false
+	}
+	// a leveling character only gets suggestions it can wear now
+	if m.game.Leveling && m.char != nil && equipLevel(it) > m.char.Level {
 		return false
 	}
 	if m.game.ClampPhase(it.Phase) > f.ServerPhase {
@@ -153,7 +193,9 @@ func (m Model) allowItem(it *db.Item) bool {
 	if len(it.Sources) == 0 {
 		return f.Other
 	}
-	for _, s := range it.Sources {
+	// only the character's side of faction-split routes (an item whose
+	// every route belongs to the other faction never passes)
+	for _, s := range m.sideSources(it) {
 		switch {
 		case m.game.DB.IsRaidDrop(s):
 			// BoE raid drops are AH-buyable: their own toggle
@@ -183,7 +225,7 @@ func (m Model) allowItem(it *db.Item) bool {
 				return true
 			}
 		case s.Crafted != nil:
-			if f.Crafted && !m.recipeLocked(s.Crafted.SpellID) {
+			if f.Crafted && !m.recipeLocked(s.Crafted.SpellID) && m.craftObtainable(it, s.Crafted) {
 				return true
 			}
 		case s.Quest != nil:
@@ -247,16 +289,28 @@ func (m Model) filterToggle(f *config.UpgradeFilter, i int) *bool {
 	return &f.PvP
 }
 
+// emblemVendorLabel is the vendor row's label; versions without emblem
+// currencies (Forever) show plain "Vendor gear".
+const emblemVendorLabel = "Emblem & vendor gear"
+
+// hasEmblems reports whether the version prices gear in emblem
+// currencies; without any, the emblem advisor (p) doesn't exist.
+func (m Model) hasEmblems() bool { return len(m.game.Currencies) > 0 }
+
 // filterToggleLabels labels the acquisition rows.
 var filterToggleLabels = []string{
 	"Raid drops (need a raid group)",
 	"BoE raid drops (buyable on AH)",
 	"Dungeon drops (5-man)",
-	"Emblem & vendor gear",
+	emblemVendorLabel,
 	"Crafted items",
 	"Quests & other sources",
-	"PvP gear (resilience items)",
+	pvpLabel,
 }
+
+// pvpLabel is the PvP row's label; versions without resilience (Forever)
+// say where their PvP gear comes from instead.
+const pvpLabel = "PvP gear (resilience items)"
 
 func (m Model) updateFilter(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
@@ -356,8 +410,12 @@ func (m Model) viewFilter() string {
 		}
 		return "  "
 	}
+	tiers := "dungeons, emblem tiers and craft recipes):"
+	if !m.hasEmblems() {
+		tiers = "dungeons and craft recipes):"
+	}
 	lines := []string{dimStyle.Render("Server phase — content open up to (hides later raids,"),
-		dimStyle.Render("dungeons, emblem tiers and craft recipes):")}
+		dimStyle.Render(tiers)}
 	for i, ph := range m.game.Phases {
 		radio := dimStyle.Render("( ) ")
 		if f.ServerPhase == i+1 {
@@ -367,6 +425,12 @@ func (m Model) viewFilter() string {
 	}
 	lines = append(lines, "", dimStyle.Render("Sources you can access:"))
 	for i, label := range filterToggleLabels {
+		if label == emblemVendorLabel && !m.hasEmblems() {
+			label = "Vendor gear"
+		}
+		if label == pvpLabel && !m.game.Rules.HasStat(db.Resilience) {
+			label = "PvP gear (honor & battlegrounds)" // no resilience before TBC
+		}
 		box := dimStyle.Render("[ ] ")
 		if *m.filterToggle(&f, m.game.MaxPhase()+i) {
 			box = okStyle.Render("[x] ")
@@ -388,4 +452,34 @@ func (m Model) viewFilter() string {
 	modal := modalStyle.Render(lipgloss.JoinVertical(lipgloss.Left,
 		header, "", strings.Join(lines, "\n"), "", footer))
 	return lipgloss.Place(m.width, m.height, lipgloss.Center, lipgloss.Center, modal)
+}
+
+// equipLevel is the character level an item needs. Quest rewards (and
+// a few new Forever items) carry no required level upstream; their
+// item level stands in — quests hand out gear a few levels above their
+// pickup level, so the fallback hides a reward a little too long
+// rather than suggesting one the character can't get yet.
+func equipLevel(it *db.Item) int {
+	// Forever's own quest rewards claim level 1 at any item level (an
+	// ilvl-55 bandana from a level-55 quest): their quest is the gate,
+	// so a level-1 claim on real gear counts as no claim
+	if it.ReqLevel > 1 || (it.ReqLevel == 1 && it.ILvl <= 10) {
+		return it.ReqLevel
+	}
+	return it.ILvl
+}
+
+// sideSources is the item's routes the character's faction can take:
+// the other side's quest givers, vendors and quartermasters drop out.
+func (m Model) sideSources(it *db.Item) []db.Source {
+	if m.char == nil {
+		return it.Sources
+	}
+	var out []db.Source
+	for _, s := range it.Sources {
+		if s.SideOpen(m.char.Faction) {
+			out = append(out, s)
+		}
+	}
+	return out
 }

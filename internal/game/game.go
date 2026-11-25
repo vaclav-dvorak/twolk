@@ -69,9 +69,19 @@ type Game struct {
 	// stripe, so which version is active is visible at a glance.
 	Accent string
 
-	// PlayerLevel is the only supported character level — weights,
-	// caps and the candidate pool all assume endgame characters.
+	// PlayerLevel is the version's max level. Without Leveling it is
+	// also the only supported character level — weights, caps and the
+	// candidate pool all assume endgame characters.
 	PlayerLevel int
+
+	// Leveling admits characters below PlayerLevel (Forever: gearing
+	// hints for what a leveling character can wear now).
+	Leveling bool
+
+	// ArmorAt names the armor class a class proposes at a character
+	// level, overriding the profile's (nil = the profile decides).
+	// Vanilla-style versions teach mail and plate only at 40.
+	ArmorAt func(c db.Class, level int) db.ArmorType
 
 	// MinUsefulILvl floors upgrade candidates: below it nothing can
 	// matter to an endgame character. Worn items are unaffected — it

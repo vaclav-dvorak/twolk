@@ -20,6 +20,7 @@ var rules85 = &score.Rules{
 	SpellHitRatingPerPct: 102.44574,
 	RatingPerExpertise:   30.027197,
 	CritRatingPerPct:     179.28004,
+	RacialHit:            map[string]float64{"Draenei": 1}, // Heroic Presence
 	GemQuality:           db.QualityRare,
 	MetaQuality:          db.QualityRare,
 	Reforging:            true,

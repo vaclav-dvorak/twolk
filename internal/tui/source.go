@@ -39,7 +39,7 @@ func (m Model) routeOpen(it *db.Item, s db.Source) bool {
 	case s.Rep != nil:
 		return f.Vendor
 	case s.Crafted != nil:
-		return f.Crafted && !m.recipeLocked(s.Crafted.SpellID)
+		return f.Crafted && !m.recipeLocked(s.Crafted.SpellID) && m.craftObtainable(it, s.Crafted)
 	case s.Quest != nil:
 		if m.game.DB.RaidGated(it) {
 			return f.Raids
@@ -53,16 +53,22 @@ func (m Model) routeOpen(it *db.Item, s db.Source) bool {
 // merging drop difficulties ("Marrowgar · ICC (10/25)"). Routes the
 // active filter allows come first; filtered-off routes stay listed
 // (the item exists there) but render faint.
-func (m Model) sourceText(it *db.Item) string {
+func (m Model) sourceText(it *db.Item) string { return m.sourceTextSel(it, rowStyler(false)) }
+
+// sourceTextSel is sourceText styled for a list row: sel (rowStyler)
+// lays the cursor row's highlight under every styled span, so the
+// highlighted row keeps its colors — the accent "craftable by
+// yourself" included — instead of being flattened to one style.
+func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Style) string {
 	if len(it.Sources) == 0 {
 		if m.game.DB.RaidGated(it) {
 			// Sanctified upgrades et al. carry no upstream source
-			return m.srcStyle(m.filter.Raids).Render("Vendor: raid tokens")
+			return sel(m.srcStyle(m.filter.Raids)).Render("Vendor: raid tokens")
 		}
 		if m.game.DB.PvPItem(it) {
-			return m.srcStyle(m.filter.PvP).Render("PvP vendor: honor / marks")
+			return sel(m.srcStyle(m.filter.PvP)).Render("PvP vendor: honor / marks")
 		}
-		return dimStyle.Render("source unknown")
+		return sel(dimStyle).Render("source unknown")
 	}
 	type dropKey struct {
 		who  string
@@ -72,6 +78,9 @@ func (m Model) sourceText(it *db.Item) string {
 	type srcPart struct {
 		text string
 		open bool
+		// tag is a suffix in the accent color — the news on the line
+		// ("craftable by yourself"); plain when the route is closed
+		tag string
 	}
 	dropDiffs := map[dropKey][]string{}
 	dropEvents := map[dropKey]string{}
@@ -80,7 +89,13 @@ func (m Model) sourceText(it *db.Item) string {
 	var dropOrder []dropKey
 	var parts []srcPart
 
-	for _, s := range it.Sources {
+	// the character's side only; an item only the other faction can get
+	// (shown when it is worn, say) still names its routes
+	sources := m.sideSources(it)
+	if len(sources) == 0 {
+		sources = it.Sources
+	}
+	for _, s := range sources {
 		switch {
 		case s.Drop != nil:
 			who := m.game.DB.NPCs[s.Drop.NPCID]
@@ -109,10 +124,10 @@ func (m Model) sourceText(it *db.Item) string {
 				dropDiffs[k] = append(dropDiffs[k], l)
 			}
 		case s.SoldBy != nil:
-			parts = append(parts, srcPart{m.vendorText(it, s.SoldBy), m.routeOpen(it, s)})
+			parts = append(parts, srcPart{m.vendorText(it, s.SoldBy), m.routeOpen(it, s), ""})
 		case s.Rep != nil:
 			text := "Reputation: "
-			if name := s.Rep.FactionName(); name != "" {
+			if name := m.game.DB.FactionName(s.Rep.FactionID); name != "" {
 				text += name
 			} else {
 				text += fmt.Sprintf("faction %d", s.Rep.FactionID)
@@ -120,22 +135,31 @@ func (m Model) sourceText(it *db.Item) string {
 			if st := s.Rep.Standing(); st != "" {
 				text += " — " + st
 			}
-			parts = append(parts, srcPart{text, m.routeOpen(it, s)})
+			parts = append(parts, srcPart{text, m.routeOpen(it, s), ""})
 		case s.Quest != nil:
 			open := m.routeOpen(it, s)
 			switch {
 			case s.Quest.Name != "" && m.game.DB.RaidGated(it):
-				parts = append(parts, srcPart{"Raid quest: " + s.Quest.Name, open})
+				parts = append(parts, srcPart{"Raid quest: " + s.Quest.Name, open, ""})
 			case s.Quest.Name != "":
-				parts = append(parts, srcPart{"Quest: " + s.Quest.Name, open})
+				parts = append(parts, srcPart{"Quest: " + s.Quest.Name, open, ""})
 			case m.game.DB.RaidGated(it): // nameless raid quest (cata curated)
-				parts = append(parts, srcPart{"Raid quest reward", open})
+				parts = append(parts, srcPart{"Raid quest reward", open, ""})
 			default:
-				parts = append(parts, srcPart{"Quest reward", open})
+				parts = append(parts, srcPart{"Quest reward", open, ""})
 			}
 		case s.Crafted != nil:
-			parts = append(parts, srcPart{"Crafted: " + s.Crafted.ProfessionName() +
-				m.recipeText(s.Crafted.SpellID), m.routeOpen(it, s)})
+			part := srcPart{text: "Crafted: " + s.Crafted.ProfessionName() + m.recipeText(s.Crafted.SpellID),
+				open: m.routeOpen(it, s)}
+			if self, known := m.selfCraftable(s.Crafted); known {
+				if self {
+					part.text += " · "
+					part.tag = "craftable by yourself"
+				} else {
+					part.text += " · buy on AH"
+				}
+			}
+			parts = append(parts, part)
 		}
 	}
 
@@ -147,13 +171,13 @@ func (m Model) sourceText(it *db.Item) string {
 		switch {
 		case pp.Count > 0 && pp.Drops:
 			parts = append(parts, srcPart{
-				fmt.Sprintf("Vendor: %d× %s", pp.Count, pp.Emblem), m.filter.Dungeon})
+				fmt.Sprintf("Vendor: %d× %s", pp.Count, pp.Emblem), m.filter.Dungeon, ""})
 		case pp.Count > 0:
 			parts = append(parts, srcPart{
-				fmt.Sprintf("%s: %d× %s", pp.Label, pp.Count, pp.Emblem), m.filter.Dungeon})
+				fmt.Sprintf("%s: %d× %s", pp.Label, pp.Count, pp.Emblem), m.filter.Dungeon, ""})
 		case !pp.Drops:
 			parts = append(parts, srcPart{
-				fmt.Sprintf("%s: %ss", pp.Label, pp.Emblem), m.filter.Dungeon})
+				fmt.Sprintf("%s: %ss", pp.Label, pp.Emblem), m.filter.Dungeon, ""})
 		}
 	}
 
@@ -177,26 +201,44 @@ func (m Model) sourceText(it *db.Item) string {
 			line += " (world boss)"
 		}
 		if ev := dropEvents[k]; ev != "" {
-			line += " " + warnStyle.Render("("+ev+" only)")
+			line += " " + sel(warnStyle).Render("("+ev+" only)")
 		}
 		drops[dropOpen[k]] = append(drops[dropOpen[k]], line)
 	}
 	for _, open := range []bool{true, false} {
 		if len(drops[open]) > 0 {
-			parts = append([]srcPart{{"Drops: " + strings.Join(drops[open], "; "), open}}, parts...)
+			parts = append([]srcPart{{"Drops: " + strings.Join(drops[open], "; "), open, ""}}, parts...)
 		}
 	}
 	// open routes first, each styled by its own reachability
 	sort.SliceStable(parts, func(a, b int) bool { return parts[a].open && !parts[b].open })
+	// same-named quests from different givers (Argent Dawn Commission
+	// x3) render as identical parts: say it once
+	seen := map[srcPart]bool{}
+	uniq := parts[:0]
+	for _, p := range parts {
+		if !seen[p] {
+			seen[p] = true
+			uniq = append(uniq, p)
+		}
+	}
+	parts = uniq
 	rendered := make([]string, len(parts))
 	for i, p := range parts {
-		rendered[i] = m.srcStyle(p.open).Render(p.text)
+		rendered[i] = sel(m.srcStyle(p.open)).Render(p.text)
+		if p.tag != "" {
+			st := m.srcStyle(p.open)
+			if p.open {
+				st = tierStyle // the version's accent color
+			}
+			rendered[i] += sel(st).Render(p.tag)
+		}
 	}
-	text := strings.Join(rendered, dimStyle.Render(" | "))
+	text := strings.Join(rendered, sel(dimStyle).Render(" | "))
 	if db.IsBoE(it.ID) && len(dropOrder) > 0 {
 		// the flag matters where the item DROPS (AH-buyable instead of
 		// farmed); crafted/vendor gear being BoE is the default, not news
-		text = warnStyle.Render("BoE ") + text
+		text = sel(warnStyle).Render("BoE ") + text
 	}
 	return text
 }
@@ -262,4 +304,34 @@ func (m Model) vendorText(it *db.Item, sb *db.SoldBySource) string {
 		line += " · " + z
 	}
 	return line
+}
+
+// selfCraftable reports whether the character can craft the item
+// itself: it has the profession at the recipe's learn level. known is
+// false for versions without craft-skill data (and for the few crafts
+// it lacks), where no claim is made either way.
+func (m Model) selfCraftable(c *db.CraftedSource) (self, known bool) {
+	if m.game.DB.CraftSkills == nil || m.char == nil {
+		return false, false
+	}
+	need, ok := m.game.DB.CraftSkills[c.SpellID]
+	if !ok {
+		return false, true // no learn level: assume a crafter's job
+	}
+	for _, p := range m.char.Professions {
+		if p.Name == c.ProfessionName() && p.Skill >= need.Learn {
+			return true, true
+		}
+	}
+	return false, true
+}
+
+// craftObtainable gates a crafted route: a craft binding on pickup
+// never reaches the auction house, so only its own crafter gets it.
+func (m Model) craftObtainable(it *db.Item, c *db.CraftedSource) bool {
+	if !m.game.DB.BoPCrafts[it.ID] {
+		return true
+	}
+	self, known := m.selfCraftable(c)
+	return self || !known
 }

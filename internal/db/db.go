@@ -401,6 +401,38 @@ type Source struct {
 	Quest   *QuestSource   `json:"quest,omitempty"`
 	SoldBy  *SoldBySource  `json:"soldBy,omitempty"`
 	Rep     *RepSource     `json:"rep,omitempty"`
+	// PvP marks an honor/battleground route the Forever upstream
+	// records without detail ({"pvp": {}}); the loader turns it into
+	// the PvP classification
+	PvP *struct{} `json:"pvp,omitempty"`
+}
+
+// Side is the faction a route is limited to, in the WoWSims Faction
+// enum: 1 Alliance, 2 Horde, 0 either (quest givers, faction vendors and
+// quartermasters carry it; drops and crafts never do).
+func (s Source) Side() int {
+	switch {
+	case s.Quest != nil:
+		return s.Quest.Faction
+	case s.SoldBy != nil:
+		return s.SoldBy.Faction
+	case s.Rep != nil:
+		return s.Rep.Side
+	}
+	return 0
+}
+
+// SideOpen reports whether a character of the given faction, as the
+// armory exports it ("Alliance"/"Horde"), can take the route. Unknown
+// faction strings allow everything.
+func (s Source) SideOpen(faction string) bool {
+	switch s.Side() {
+	case 1:
+		return faction != "Horde"
+	case 2:
+		return faction != "Alliance"
+	}
+	return true
 }
 
 // RepSource is a reputation-vendor route: the item sells at a faction
@@ -409,7 +441,8 @@ type Source struct {
 // quartermaster gear as plain SoldBy vendors.
 type RepSource struct {
 	FactionID int `json:"repFactionId"`
-	Level     int `json:"repLevel"` // client ReputationRank enum, 8 = Exalted
+	Level     int `json:"repLevel"`  // client ReputationRank enum, 8 = Exalted
+	Side      int `json:"factionId"` // see Source.Side
 }
 
 // repFactionNames covers the factions that gate gear in the cata pool.
@@ -425,9 +458,16 @@ var repFactionNames = map[int]string{
 	1204: "Avengers of Hyjal",
 }
 
-// FactionName resolves the faction's display name ("" when uncurated —
-// callers fall back to a generic label rather than inventing one).
-func (r *RepSource) FactionName() string { return repFactionNames[r.FactionID] }
+// FactionName resolves a reputation faction's display name: the
+// version's own faction list where its data carries one (Forever), else
+// the curated cata table; "" when neither knows it — callers fall back
+// to a generic label rather than inventing one.
+func (d *Database) FactionName(id int) string {
+	if name := d.Factions[id]; name != "" {
+		return name
+	}
+	return repFactionNames[id]
+}
 
 var repStandings = [...]string{"", "Hated", "Hostile", "Unfriendly",
 	"Neutral", "Friendly", "Honored", "Revered", "Exalted"}
@@ -496,33 +536,38 @@ func (d *Database) IsRaidDrop(s Source) bool {
 }
 
 type QuestSource struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Faction int    `json:"faction"` // see Source.Side
 }
 
 type SoldBySource struct {
 	NPCID   int    `json:"npcId"`
 	NPCName string `json:"npcName"`
 	ZoneID  int    `json:"zoneId"`
+	Faction int    `json:"faction"` // see Source.Side
 }
 
 // Item is one equippable item.
 type Item struct {
-	ID             int                `json:"id"`
-	Name           string             `json:"name"`
-	Icon           string             `json:"icon"`
-	Slot           Slot               `json:"type"`
-	ArmorType      ArmorType          `json:"armorType"`
-	WeaponType     WeaponType         `json:"weaponType"`
-	HandType       HandType           `json:"handType"`
-	RangedType     RangedWeaponType   `json:"rangedWeaponType"`
-	Stats          Stats              `json:"stats"`
-	WeaponDmgMin   float64            `json:"weaponDamageMin"`
-	WeaponDmgMax   float64            `json:"weaponDamageMax"`
-	WeaponSpeed    float64            `json:"weaponSpeed"`
-	GemSockets     []GemColor         `json:"gemSockets"`
-	SocketBonus    Stats              `json:"socketBonus"`
-	ILvl           int                `json:"ilvl"`
+	ID           int              `json:"id"`
+	Name         string           `json:"name"`
+	Icon         string           `json:"icon"`
+	Slot         Slot             `json:"type"`
+	ArmorType    ArmorType        `json:"armorType"`
+	WeaponType   WeaponType       `json:"weaponType"`
+	HandType     HandType         `json:"handType"`
+	RangedType   RangedWeaponType `json:"rangedWeaponType"`
+	Stats        Stats            `json:"stats"`
+	WeaponDmgMin float64          `json:"weaponDamageMin"`
+	WeaponDmgMax float64          `json:"weaponDamageMax"`
+	WeaponSpeed  float64          `json:"weaponSpeed"`
+	GemSockets   []GemColor       `json:"gemSockets"`
+	SocketBonus  Stats            `json:"socketBonus"`
+	ILvl         int              `json:"ilvl"`
+	// ReqLevel is the character level needed to equip the item; 0 when
+	// the upstream carries none (quest rewards, endgame-only dumps).
+	ReqLevel       int                `json:"reqLvl"`
 	Phase          int                `json:"phase"`
 	Quality        Quality            `json:"quality"`
 	Unique         bool               `json:"unique"`
@@ -589,6 +634,9 @@ type Enchant struct {
 	Stats          Stats   `json:"stats"`
 	Quality        Quality `json:"quality"`
 	ClassAllowlist []Class `json:"classAllowlist"`
+	// ReqLevel is the character level the enchant needs; 0 when the
+	// upstream carries none (only the Forever data states it).
+	ReqLevel int `json:"-"`
 	// Phase is the content phase the enchant arrives in (0 = launch).
 	// The upstream carries no availability data on enchants — their
 	// carrier items aren't gear, so the phase overlay never reaches
@@ -655,7 +703,26 @@ type Database struct {
 	// that route's price and availability; nil for versions without one.
 	Protocol map[int]ProtocolPrice
 
+	// CraftSkills maps craft spells to the profession skill that learns
+	// them, and BoPCrafts the crafted items that bind on pickup — the
+	// data behind "craftable by yourself" vs "buy on AH". nil for
+	// versions without it (only Forever's loader fills them).
+	CraftSkills map[int]CraftSkill
+	BoPCrafts   map[int]bool
+
+	// Factions names the reputation factions the version's data lists
+	// (Forever ships them; nil elsewhere, see FactionName).
+	Factions map[int]string
+
 	enchantByEffect map[int][]*Enchant // lazy index; rebuilt per process
+}
+
+// CraftSkill is the profession skill a craft recipe is learned at.
+// Estimated marks trainer recipes, whose learn level only the server
+// knows (see tools/gen_forever_crafts.py).
+type CraftSkill struct {
+	Learn     int
+	Estimated bool
 }
 
 // ProtocolFor reports the heroic-plus dungeon route of an item: the

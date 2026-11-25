@@ -6,6 +6,7 @@ import (
 	"github.com/vaclav-dvorak/twolk/internal/db"
 	"github.com/vaclav-dvorak/twolk/internal/game"
 	"github.com/vaclav-dvorak/twolk/internal/game/cata"
+	"github.com/vaclav-dvorak/twolk/internal/game/forever"
 	"github.com/vaclav-dvorak/twolk/internal/game/wotlk"
 )
 
@@ -14,13 +15,16 @@ import (
 // whole session: the import wizard offers every module's servers, and
 // the active character's game slug picks which one m.game points at.
 func allModules() []*game.Game {
-	return []*game.Game{wotlk.New(nil), cata.New(nil)}
+	return []*game.Game{wotlk.New(nil), cata.New(nil), forever.New(nil)}
 }
 
 // loadModuleDB loads the embedded item database for a module slug.
 func loadModuleDB(slug string) (*db.Database, error) {
-	if slug == "cata" {
+	switch slug {
+	case "cata":
 		return cata.LoadDB()
+	case "forever":
+		return forever.LoadDB()
 	}
 	return wotlk.LoadDB()
 }
