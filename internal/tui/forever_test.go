@@ -521,3 +521,56 @@ func TestForeverOptimizeEnchants(t *testing.T) {
 		t.Errorf("advisor left enchant %s assumed on candidates", e.Name)
 	}
 }
+
+// importForever drives a fresh model through the Forever import of the
+// given export JSON and loads the Forever database.
+func importForever(t *testing.T, export string) (Model, *db.Database) {
+	t.Helper()
+	t.Setenv("HOME", t.TempDir())
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := New(cfg)
+	m = drive(t, m, tea.WindowSizeMsg{Width: 160, Height: 40})
+	m = keys(t, m, "i")
+	for i, r := range m.realmRows() {
+		if r.server.Slug == "blizzard" && r.realm == "EU" {
+			m.impCursor = i
+		}
+	}
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
+	m = keys(t, m, "Brannoc Ironvale")
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = next.(Model)
+	m = drive(t, m, importFetchedMsg{raw: []byte(export)})
+	d, err := db.LoadForever()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return drive(t, m, dbLoadedMsg{slug: "forever", db: d}), d
+}
+
+// TestForeverRecipeRoutes: crafted gear names where its recipe comes
+// from — the profession camp of the character's own side, reputation
+// vendors with the standing they need — after the craftable label.
+func TestForeverRecipeRoutes(t *testing.T) {
+	// Totemic Leather Gloves: Leatherworking 75, sold at the camps
+	m, d := importForever(t, foreverExport) // Alliance, Leatherworking 152
+	src := ansi.Strip(m.sourceText(d.Items[252497]))
+	want := "craftable by yourself · recipe sold: Azeroth Commerce Authority · 30 Merchant's Favor"
+	if !strings.Contains(src, want) {
+		t.Errorf("Alliance: %q, want %q", src, want)
+	}
+	horde := strings.Replace(foreverExport, `"faction":"Alliance"`, `"faction":"Horde"`, 1)
+	m, d = importForever(t, horde)
+	src = ansi.Strip(m.sourceText(d.Items[252497]))
+	if !strings.Contains(src, "Durotar Supply and Logistics · 30 Merchant's Favor") || strings.Contains(src, "Azeroth") {
+		t.Errorf("Horde: %q, want the Durotar camp", src)
+	}
+	// a reputation recipe: the vendor and the standing (client data)
+	r, ok := d.RecipeFor(20848, "Alliance") // Flarecore Mantle
+	if !ok || r.Where != "Lokhtos Darkbargainer" || r.Rep != "Thorium Brotherhood — Honored" {
+		t.Errorf("Flarecore Mantle recipe: %+v", r)
+	}
+}

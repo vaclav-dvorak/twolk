@@ -67,6 +67,10 @@ type RuleSet struct {
 	// Recipes maps craft spell IDs to how the recipe is learned
 	// (trainer, vendor, drop, quest) — generated per version.
 	Recipes map[int]RecipeSource
+	// RecipesHorde overrides a recipe's Where for Horde characters,
+	// where the two sides buy it from different vendors (Forever's
+	// Azeroth Commerce Authority vs Durotar Supply and Logistics)
+	RecipesHorde map[int]string
 
 	// EnchantCrafts maps item-based enchants' carrier items (scopes,
 	// armor kits) to the craft spell that makes them.

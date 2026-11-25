@@ -16,3 +16,4 @@ ls -la internal/db/data/
 echo "now regenerate the craft tables for the same build:"
 echo "  python3 tools/gen_forever_crafts.py <build> | gofmt > internal/db/forevercrafts_gen.go"
 echo "  python3 tools/gen_forever_worlddrops.py | gofmt > internal/db/foreverworlddrops_gen.go"
+echo "  python3 tools/gen_forever_recipes.py | gofmt > internal/db/foreverrecipes_gen.go"

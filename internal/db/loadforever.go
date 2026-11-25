@@ -327,7 +327,11 @@ func ParseForever(main, leftover []byte) (*Database, error) {
 // ForeverRules is the Forever classification table set; the PvP table
 // is filled from the data itself (classifyForeverPvP).
 func ForeverRules() RuleSet {
-	return RuleSet{PvPItems: map[int]bool{}}
+	return RuleSet{
+		PvPItems:     map[int]bool{},
+		Recipes:      foreverRecipes,
+		RecipesHorde: foreverRecipesHorde,
+	}
 }
 
 // classifyForeverPvP marks the PvP-only items: everything the upstream

@@ -168,7 +168,10 @@ Character data stays on your machine.
   supplies the World of Warcraft: Forever item database; Forever hunter
   stat weights were measured by running its simulator.
 - **[QuestieDB](https://github.com/Questie/QuestieDB)** supplies which
-  Forever items drop in the open world (used under GPLv3).
+  Forever items drop in the open world and where Forever recipes come
+  from (used under GPLv3).
+- **[Wowhead](https://www.wowhead.com/forever)**'s Azeroth Commerce
+  Authority guide supplies the profession camps' recipe list.
 - **[AzerothCore](https://github.com/azerothcore/azerothcore-wotlk)**
   and **[TrinityCore](https://github.com/TrinityCore/TrinityCore)**
   world databases supply vendor prices, recipe sources and 3.3.5 stat

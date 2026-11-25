@@ -81,6 +81,10 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 		// tag is a suffix in the accent color — the news on the line
 		// ("craftable by yourself"); plain when the route is closed
 		tag string
+		// tail follows the tag in the plain style (the recipe route
+		// after "craftable by yourself", so the label never truncates
+		// behind a long vendor name)
+		tail string
 	}
 	dropDiffs := map[dropKey][]string{}
 	dropEvents := map[dropKey]string{}
@@ -124,7 +128,7 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 				dropDiffs[k] = append(dropDiffs[k], l)
 			}
 		case s.SoldBy != nil:
-			parts = append(parts, srcPart{m.vendorText(it, s.SoldBy), m.routeOpen(it, s), ""})
+			parts = append(parts, srcPart{m.vendorText(it, s.SoldBy), m.routeOpen(it, s), "", ""})
 		case s.Rep != nil:
 			text := "Reputation: "
 			if name := m.game.DB.FactionName(s.Rep.FactionID); name != "" {
@@ -135,22 +139,22 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 			if st := s.Rep.Standing(); st != "" {
 				text += " — " + st
 			}
-			parts = append(parts, srcPart{text, m.routeOpen(it, s), ""})
+			parts = append(parts, srcPart{text, m.routeOpen(it, s), "", ""})
 		case s.Quest != nil:
 			open := m.routeOpen(it, s)
 			switch {
 			case s.Quest.Name != "" && m.game.DB.RaidGated(it):
-				parts = append(parts, srcPart{"Raid quest: " + s.Quest.Name, open, ""})
+				parts = append(parts, srcPart{"Raid quest: " + s.Quest.Name, open, "", ""})
 			case s.Quest.Name != "":
-				parts = append(parts, srcPart{"Quest: " + s.Quest.Name, open, ""})
+				parts = append(parts, srcPart{"Quest: " + s.Quest.Name, open, "", ""})
 			case m.game.DB.RaidGated(it): // nameless raid quest (cata curated)
-				parts = append(parts, srcPart{"Raid quest reward", open, ""})
+				parts = append(parts, srcPart{"Raid quest reward", open, "", ""})
 			default:
-				parts = append(parts, srcPart{"Quest reward", open, ""})
+				parts = append(parts, srcPart{"Quest reward", open, "", ""})
 			}
 		case s.Crafted != nil:
-			part := srcPart{text: "Crafted: " + s.Crafted.ProfessionName() + m.recipeText(s.Crafted.SpellID),
-				open: m.routeOpen(it, s)}
+			part := srcPart{text: "Crafted: " + s.Crafted.ProfessionName(), open: m.routeOpen(it, s)}
+			recipe := m.recipeText(s.Crafted.SpellID)
 			if self, known := m.selfCraftable(s.Crafted); known {
 				if self {
 					part.text += " · "
@@ -158,6 +162,11 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 				} else {
 					part.text += " · buy on AH"
 				}
+			}
+			if part.tag != "" {
+				part.tail = recipe
+			} else {
+				part.text += recipe
 			}
 			parts = append(parts, part)
 		}
@@ -171,13 +180,13 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 		switch {
 		case pp.Count > 0 && pp.Drops:
 			parts = append(parts, srcPart{
-				fmt.Sprintf("Vendor: %d× %s", pp.Count, pp.Emblem), m.filter.Dungeon, ""})
+				fmt.Sprintf("Vendor: %d× %s", pp.Count, pp.Emblem), m.filter.Dungeon, "", ""})
 		case pp.Count > 0:
 			parts = append(parts, srcPart{
-				fmt.Sprintf("%s: %d× %s", pp.Label, pp.Count, pp.Emblem), m.filter.Dungeon, ""})
+				fmt.Sprintf("%s: %d× %s", pp.Label, pp.Count, pp.Emblem), m.filter.Dungeon, "", ""})
 		case !pp.Drops:
 			parts = append(parts, srcPart{
-				fmt.Sprintf("%s: %ss", pp.Label, pp.Emblem), m.filter.Dungeon, ""})
+				fmt.Sprintf("%s: %ss", pp.Label, pp.Emblem), m.filter.Dungeon, "", ""})
 		}
 	}
 
@@ -207,7 +216,7 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 	}
 	for _, open := range []bool{true, false} {
 		if len(drops[open]) > 0 {
-			parts = append([]srcPart{{"Drops: " + strings.Join(drops[open], "; "), open, ""}}, parts...)
+			parts = append([]srcPart{{"Drops: " + strings.Join(drops[open], "; "), open, "", ""}}, parts...)
 		}
 	}
 	// open routes first, each styled by its own reachability
@@ -233,6 +242,9 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 			}
 			rendered[i] += sel(st).Render(p.tag)
 		}
+		if p.tail != "" {
+			rendered[i] += sel(m.srcStyle(p.open)).Render(p.tail)
+		}
 	}
 	text := strings.Join(rendered, sel(dimStyle).Render(" | "))
 	if db.IsBoE(it.ID) && len(dropOrder) > 0 {
@@ -257,7 +269,11 @@ func (m Model) srcStyle(open bool) lipgloss.Style {
 // it on the auction house): " · recipe sold: Braeg Stoutbeard". Empty
 // when the route is unknown.
 func (m Model) recipeText(spellID int) string {
-	r, ok := m.game.DB.Recipe(spellID)
+	faction := ""
+	if m.char != nil {
+		faction = m.char.Faction
+	}
+	r, ok := m.game.DB.RecipeFor(spellID, faction)
 	if !ok {
 		return ""
 	}

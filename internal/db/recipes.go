@@ -37,3 +37,14 @@ func (d *Database) Recipe(spellID int) (RecipeSource, bool) {
 	r, ok := d.Rules.Recipes[spellID]
 	return r, ok
 }
+
+// RecipeFor returns how the craft spell's recipe is learned by a
+// character of the faction ("Alliance", "Horde"): the side's own
+// vendors where the two sides differ.
+func (d *Database) RecipeFor(spellID int, faction string) (RecipeSource, bool) {
+	r, ok := d.Recipe(spellID)
+	if w, side := d.Rules.RecipesHorde[spellID]; ok && side && faction == "Horde" {
+		r.Where = w
+	}
+	return r, ok
+}
