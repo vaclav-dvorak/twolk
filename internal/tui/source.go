@@ -296,6 +296,13 @@ func (m Model) recipeText(spellID int) string {
 	if r.Rep != "" {
 		where += " (" + r.Rep + ")"
 	}
+	// a legend abbreviation names the vendor kind itself ("ACA · 30
+	// Favor"): no "recipe sold" before it
+	for _, a := range m.game.DB.Rules.Legend {
+		if strings.HasPrefix(where, a.Short+" ") {
+			return " · " + where
+		}
+	}
 	return " · " + how + ": " + where
 }
 

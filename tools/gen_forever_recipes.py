@@ -60,8 +60,10 @@ UA = {"User-Agent": "twolk-gen-forever-recipes/1.0"}
 ITEM_SPELLTRIGGER_LEARN = 6
 MAX_NAMED = 3
 RANKS = {3: "Neutral", 4: "Friendly", 5: "Honored", 6: "Revered", 7: "Exalted"}
-ALLIANCE_CAMP = "Azeroth Commerce Authority"
-HORDE_CAMP = "Durotar Supply and Logistics"
+# the camps render abbreviated; the screen's legend spells them out
+# (db.ForeverRules().Legend)
+ALLIANCE_CAMP = "ACA"
+HORDE_CAMP = "DSL"
 
 # QuestieDB keys, 0-based
 ITEM_NPC_DROPS, ITEM_OBJECT_DROPS, ITEM_QUEST_REWARDS, ITEM_VENDORS = 1, 2, 5, 13
@@ -176,7 +178,7 @@ def main():
         """(priority, kind, where, horde where, rep) for one recipe item; None unknown"""
         r = sparse[item]
         if item in aca:
-            cost = f" · {aca[item]['cost']} Merchant's Favor"
+            cost = f" · {aca[item]['cost']} Favor"
             return 0, "RecipeVendor", ALLIANCE_CAMP + cost, HORDE_CAMP + cost, ""
         q = qitems.get(item)
         vendors = ids(field(q, ITEM_VENDORS)) if q else []

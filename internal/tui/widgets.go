@@ -2,9 +2,11 @@ package tui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/vaclav-dvorak/twolk/internal/db"
 	"github.com/vaclav-dvorak/twolk/internal/score"
@@ -21,6 +23,9 @@ var paneCols = cmpCols{labelW: 18, lw: 12, gw: 8, epW: 9, rw: 12, hideSame: true
 
 // pinFooter pins the help line to the terminal's bottom row under body.
 func (m Model) pinFooter(body, help string) string {
+	if l := m.legend(body); l != "" {
+		help = truncate(help+"  "+l, m.width)
+	}
 	gap := max(m.height-lipgloss.Height(body)-1, 1)
 	return body + lipgloss.PlaceVertical(gap, lipgloss.Bottom, help)
 }
@@ -183,4 +188,32 @@ func helpLine(pairs ...string) string {
 		b.WriteString(helpDesc.Render(" " + pairs[i+1]))
 	}
 	return b.String()
+}
+
+// legend spells out the version's abbreviations visible in body ("ACA
+// Azeroth Commerce Authority"), for the footer; "" when none shows.
+func (m Model) legend(body string) string {
+	if m.game.DB == nil || len(m.game.DB.Rules.Legend) == 0 {
+		return ""
+	}
+	plain := ansi.Strip(body)
+	var parts []string
+	for _, a := range m.game.DB.Rules.Legend {
+		if legendRe(a.Short).MatchString(plain) {
+			parts = append(parts, helpKey.Render(a.Short)+helpDesc.Render(" "+a.Long))
+		}
+	}
+	return strings.Join(parts, dimStyle.Render(" · "))
+}
+
+var legendRes = map[string]*regexp.Regexp{}
+
+// legendRe matches the abbreviation as a whole word.
+func legendRe(short string) *regexp.Regexp {
+	if re, ok := legendRes[short]; ok {
+		return re
+	}
+	re := regexp.MustCompile(`\b` + regexp.QuoteMeta(short) + `\b`)
+	legendRes[short] = re
+	return re
 }

@@ -71,6 +71,9 @@ type RuleSet struct {
 	// where the two sides buy it from different vendors (Forever's
 	// Azeroth Commerce Authority vs Durotar Supply and Logistics)
 	RecipesHorde map[int]string
+	// Legend spells out the abbreviations source lines use ("ACA");
+	// screens showing one list it in their footer
+	Legend []Abbrev
 
 	// EnchantCrafts maps item-based enchants' carrier items (scopes,
 	// armor kits) to the craft spell that makes them.
@@ -287,3 +290,6 @@ func uniqueRingGroups() map[int]string {
 	}
 	return groups
 }
+
+// Abbrev is one legend entry: a short label and what it stands for.
+type Abbrev struct{ Short, Long string }

@@ -558,14 +558,23 @@ func TestForeverRecipeRoutes(t *testing.T) {
 	// Totemic Leather Gloves: Leatherworking 75, sold at the camps
 	m, d := importForever(t, foreverExport) // Alliance, Leatherworking 152
 	src := ansi.Strip(m.sourceText(d.Items[252497]))
-	want := "craftable by yourself · recipe sold: Azeroth Commerce Authority · 30 Merchant's Favor"
+	want := "craftable by yourself · ACA · 30 Favor"
 	if !strings.Contains(src, want) {
 		t.Errorf("Alliance: %q, want %q", src, want)
+	}
+	// the footer spells the abbreviations out on a screen showing them
+	foot := ansi.Strip(m.pinFooter(m.sourceText(d.Items[252497]), "esc back"))
+	if !strings.Contains(foot, "ACA Azeroth Commerce Authority") || !strings.Contains(foot, "Favor Merchant's Favor") ||
+		strings.Contains(foot, "DSL") {
+		t.Errorf("legend: %q", foot)
+	}
+	if foot := ansi.Strip(m.pinFooter("Crafted: Leatherworking", "esc back")); strings.Contains(foot, "Azeroth") {
+		t.Errorf("legend without an abbreviation on screen: %q", foot)
 	}
 	horde := strings.Replace(foreverExport, `"faction":"Alliance"`, `"faction":"Horde"`, 1)
 	m, d = importForever(t, horde)
 	src = ansi.Strip(m.sourceText(d.Items[252497]))
-	if !strings.Contains(src, "Durotar Supply and Logistics · 30 Merchant's Favor") || strings.Contains(src, "Azeroth") {
+	if !strings.Contains(src, "DSL · 30 Favor") || strings.Contains(src, "ACA") {
 		t.Errorf("Horde: %q, want the Durotar camp", src)
 	}
 	// a reputation recipe: the vendor and the standing (client data)
