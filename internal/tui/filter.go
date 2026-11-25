@@ -102,6 +102,18 @@ func (m Model) enchantGate() func(*db.Enchant) bool {
 	if !m.assumeEnchants() {
 		return func(*db.Enchant) bool { return false }
 	}
+	return m.availableEnchants()
+}
+
+// availableEnchants is the enchant predicate without the candidate
+// assumption: what the character can put on gear it wears — its level
+// and the realm's unlocks. The optimization advisor uses it, so a
+// leveling character still hears about enchants for its worn pieces
+// while upgrade candidates are compared bare. nil when nothing gates.
+func (m Model) availableEnchants() func(*db.Enchant) bool {
+	if m.game.DB == nil {
+		return nil
+	}
 	level := 0
 	if m.game.Leveling && m.char != nil && m.char.Level < m.game.PlayerLevel {
 		level = m.char.Level
@@ -296,6 +308,10 @@ const emblemVendorLabel = "Emblem & vendor gear"
 // hasEmblems reports whether the version prices gear in emblem
 // currencies; without any, the emblem advisor (p) doesn't exist.
 func (m Model) hasEmblems() bool { return len(m.game.Currencies) > 0 }
+
+// hasGems reports whether the version knows gems at all (Forever has
+// none): gem text stays off screens where it can only mislead.
+func (m Model) hasGems() bool { return m.game.DB != nil && len(m.game.DB.Gems) > 0 }
 
 // filterToggleLabels labels the acquisition rows.
 var filterToggleLabels = []string{

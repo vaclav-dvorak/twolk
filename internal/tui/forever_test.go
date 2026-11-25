@@ -459,3 +459,65 @@ func TestForeverUnpricedEffects(t *testing.T) {
 		t.Errorf("a summon carries stats: %v", es[0].Bonus)
 	}
 }
+
+// TestForeverOptimizeEnchants: below max level the candidate enchant
+// assumption is off, yet the advisor still proposes enchants of the
+// character's level for the worn gear, and no gem text shows anywhere
+// (Forever has no gems).
+func TestForeverOptimizeEnchants(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	cfg, err := config.Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := New(cfg)
+	m = drive(t, m, tea.WindowSizeMsg{Width: 160, Height: 60})
+	m = keys(t, m, "i")
+	for i, r := range m.realmRows() {
+		if r.server.Slug == "blizzard" && r.realm == "EU" {
+			m.impCursor = i
+		}
+	}
+	m = drive(t, m, tea.KeyMsg{Type: tea.KeyEnter})
+	m = keys(t, m, "Brannoc Ironvale")
+	next, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	m = next.(Model)
+	m = drive(t, m, importFetchedMsg{raw: []byte(foreverExport)}) // level 32
+	d, err := db.LoadForever()
+	if err != nil {
+		t.Fatal(err)
+	}
+	m = drive(t, m, dbLoadedMsg{slug: "forever", db: d})
+	if m.assumeEnchants() {
+		t.Fatal("a level-32 character assumes candidate enchants")
+	}
+	if strings.Contains(strings.ToLower(m.status), "gem") {
+		t.Errorf("import status mentions gems: %q", m.status)
+	}
+	m = keys(t, m, "o")
+	plan := m.optPlan
+	if len(plan.Enchants) == 0 {
+		t.Fatal("the advisor proposes no enchant for a level-32 character")
+	}
+	rows := m.gearRows()
+	for _, tip := range plan.Enchants {
+		if rows[tip.ItemIdx].empty {
+			t.Errorf("enchant %s proposed for the empty %s slot", tip.To.Name, rows[tip.ItemIdx].item.Slot)
+		}
+		need := tip.To.ReqLevel
+		if need == 0 {
+			need = m.game.PlayerLevel
+		}
+		if need > 32 {
+			t.Errorf("%s needs level %d", tip.To.Name, need)
+		}
+	}
+	view := strings.ToLower(ansi.Strip(m.View()))
+	if strings.Contains(view, "gem") || strings.Contains(view, "socket") {
+		t.Errorf("the Forever advisor mentions gems:\n%s", view)
+	}
+	// the candidate assumption is untouched by the advisor
+	if e := m.scorer.BestEnchant(d.Items[4253]); e != nil {
+		t.Errorf("advisor left enchant %s assumed on candidates", e.Name)
+	}
+}

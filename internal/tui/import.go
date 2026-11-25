@@ -342,7 +342,11 @@ func (m Model) saveImport() (tea.Model, tea.Cmd) {
 	m.status = fmt.Sprintf("imported %s @ %s", char.Name, sel.realm)
 	for _, eq := range char.Equipment {
 		if eq.HasDetail {
-			m.status += " (with gems & enchants)"
+			if m.hasGems() {
+				m.status += " (with gems & enchants)"
+			} else {
+				m.status += " (with enchants)"
+			}
 			break
 		}
 	}

@@ -19,7 +19,7 @@ import (
 // reforging (cata); WotLK sees gems + enchants.
 
 func (m *Model) openOptimize() {
-	m.optPlan = m.scorer.Optimize(wornOf(m.gearRows()))
+	m.optPlan = m.optimizePlan()
 	m.optNote = ""
 	m.optOff = 0
 	m.mode = modeOptimize
@@ -62,6 +62,40 @@ func (m Model) updateOptimize(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	return m, nil
+}
+
+// optimizePlan solves the joint plan for the worn set. Enchants are
+// gated by what the character can apply (level, unlocks), never by the
+// candidate assumption: that toggle decides whether upgrades are priced
+// enchanted, not whether the worn gear deserves an enchant.
+func (m Model) optimizePlan() score.OptimizePlan {
+	rows := m.gearRows()
+	ws := wornOf(rows)
+	// an empty slot has nothing to enchant: detail-less items are left
+	// untouched by every domain solver
+	for i, r := range rows {
+		if r.empty {
+			ws[i].HasDetail = false
+		}
+	}
+	if m.assumeEnchants() {
+		return m.scorer.Optimize(ws)
+	}
+	m.scorer.SetEnchantGate(m.availableEnchants())
+	defer m.scorer.SetEnchantGate(m.enchantGate())
+	return m.scorer.Optimize(ws)
+}
+
+// optScope names the advisor's domains under the version's rules.
+func (m Model) optScope() string {
+	var parts []string
+	if m.scorer != nil && m.scorer.Reforging() {
+		parts = append(parts, "reforges")
+	}
+	if m.hasGems() {
+		parts = append(parts, "gems")
+	}
+	return strings.Join(append(parts, "enchants"), " · ")
 }
 
 // reforgeText renders one reforge ("67 Mastery → Hit"); nil reads as
@@ -193,12 +227,12 @@ func (m Model) optReforgeLines(rows []gearRow) []string {
 func (m Model) viewOptimize() string {
 	rows := m.gearRows()
 	header := m.viewHeader()
-	scope := "gems · enchants"
-	if m.scorer != nil && m.scorer.Reforging() {
-		scope = "reforges · " + scope
+	scope := m.optScope()
+	note := " solved as one plan: cap-aware, socket bonuses and meta activation included"
+	if !m.hasGems() {
+		note = " solved as one plan, cap-aware"
 	}
-	context := titleStyle.Render("▸ Optimization advisor") +
-		dimStyle.Render("  ("+scope+" solved as one plan: cap-aware, socket bonuses and meta activation included)")
+	context := titleStyle.Render("▸ Optimization advisor") + dimStyle.Render("  ("+scope+note+")")
 
 	help := helpLine("c", "copy suggestions", "esc", "back")
 
@@ -206,11 +240,14 @@ func (m Model) viewOptimize() string {
 	switch {
 	case m.scorer == nil || !anyDetail(rows):
 		body = dimStyle.Render("the optimization advisor needs an enriched import (browser snippet) —\n" +
-			"plain API exports carry no gem/enchant data")
+			"plain API exports carry no " + strings.ReplaceAll(scope, " · ", "/") + " data")
 	default:
 		body = m.optBody(rows)
 		vis := m.optVisible(lipgloss.Height(header))
 		switch {
+		case body == "" && scope == "enchants":
+			body = okStyle.Render("✦ enchants are already optimal") +
+				dimStyle.Render(" for the current weights, caps and level")
 		case body == "":
 			body = okStyle.Render("✦ "+scope+" are already optimal") +
 				dimStyle.Render(" for the current weights and caps")

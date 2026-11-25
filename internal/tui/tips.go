@@ -63,7 +63,7 @@ func (m *Model) recomputeTips() {
 	// one joint plan feeds all three advisor pointers; per-domain gains
 	// price each section alone against the worn set (indicative — the
 	// advisor's total is the exact combined number)
-	plan := m.scorer.Optimize(ws)
+	plan := m.optimizePlan()
 	m.tips.gemItems, m.tips.gemGain = len(plan.Gems.Tips), plan.Gems.Delta
 	m.tips.enchItems, m.tips.enchGain = len(plan.Enchants), m.scorer.EnchantGain(ws, plan.Enchants)
 	m.tips.refItems, m.tips.refGain = len(plan.Reforges), m.scorer.ReforgeGain(ws, plan.Reforges)
@@ -191,8 +191,12 @@ func (m Model) viewTips(budget int) string {
 	}
 
 	if len(lines) == 0 {
+		what := "gems, enchants and gear look"
+		if !m.hasGems() {
+			what = "enchants and gear look"
+		}
 		lines = append(lines, okStyle.Render("✦ nothing to improve")+
-			dimStyle.Render(" — gems, enchants and gear look optimal within the current filter"))
+			dimStyle.Render(" — "+what+" optimal within the current filter"))
 	}
 	// hard clamp: on a tiny terminal even the priority lines give way —
 	// the pane must never push the help line off screen
