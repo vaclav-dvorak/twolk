@@ -43,7 +43,8 @@ var (
 	okStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B"))
 	errStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#FF5555"))
 	warnStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#FFB86C"))
-	bisStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B")) // best-in-slot tick: green = done, unlike the orange ▲
+	goldStyle   = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("#FFD100")) // the profession camps (ACA / DSL)
+	bisStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#50FA7B"))            // best-in-slot tick: green = done, unlike the orange ▲
 	modalStyle  = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("81")).Padding(1, 2)
 	helpKey     = lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
 	helpDesc    = lipgloss.NewStyle().Foreground(lipgloss.Color("247"))

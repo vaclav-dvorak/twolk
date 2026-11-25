@@ -200,7 +200,11 @@ func (m Model) legend(body string) string {
 	var parts []string
 	for _, a := range m.game.DB.Rules.Legend {
 		if legendRe(a.Short).MatchString(plain) {
-			parts = append(parts, helpKey.Render(a.Short)+helpDesc.Render(" "+a.Long))
+			key := helpKey
+			if a.Marked {
+				key = goldStyle
+			}
+			parts = append(parts, key.Render(a.Short)+helpDesc.Render(" "+a.Long))
 		}
 	}
 	return strings.Join(parts, dimStyle.Render(" · "))

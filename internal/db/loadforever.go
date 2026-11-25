@@ -332,9 +332,9 @@ func ForeverRules() RuleSet {
 		Recipes:      foreverRecipes,
 		RecipesHorde: foreverRecipesHorde,
 		Legend: []Abbrev{
-			{"ACA", "Azeroth Commerce Authority"},
-			{"DSL", "Durotar Supply and Logistics"},
-			{"Favor", "Merchant's Favor"},
+			{"ACA", "Azeroth Commerce Authority", true},
+			{"DSL", "Durotar Supply and Logistics", true},
+			{"Favor", "Merchant's Favor", false},
 		},
 	}
 }

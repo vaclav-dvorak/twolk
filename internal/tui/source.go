@@ -234,7 +234,7 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 	parts = uniq
 	rendered := make([]string, len(parts))
 	for i, p := range parts {
-		rendered[i] = sel(m.srcStyle(p.open)).Render(p.text)
+		rendered[i] = m.renderAbbrevs(p.text, sel(m.srcStyle(p.open)), p.open, sel)
 		if p.tag != "" {
 			st := m.srcStyle(p.open)
 			if p.open {
@@ -243,7 +243,7 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 			rendered[i] += sel(st).Render(p.tag)
 		}
 		if p.tail != "" {
-			rendered[i] += sel(m.srcStyle(p.open)).Render(p.tail)
+			rendered[i] += m.renderAbbrevs(p.tail, sel(m.srcStyle(p.open)), p.open, sel)
 		}
 	}
 	text := strings.Join(rendered, sel(dimStyle).Render(" | "))
@@ -357,4 +357,35 @@ func (m Model) craftObtainable(it *db.Item, c *db.CraftedSource) bool {
 	}
 	self, known := m.selfCraftable(c)
 	return self || !known
+}
+
+// renderAbbrevs renders text in base, with the version's legend
+// marked abbreviations ("ACA") in gold on open routes, so the camp stands out
+// on a long source line; closed routes stay uniformly faint.
+func (m Model) renderAbbrevs(text string, base lipgloss.Style, open bool, sel func(lipgloss.Style) lipgloss.Style) string {
+	if !open || m.game.DB == nil || len(m.game.DB.Rules.Legend) == 0 {
+		return base.Render(text)
+	}
+	var b strings.Builder
+	for text != "" {
+		at, short := -1, ""
+		for _, a := range m.game.DB.Rules.Legend {
+			if !a.Marked {
+				continue
+			}
+			if loc := legendRe(a.Short).FindStringIndex(text); loc != nil && (at < 0 || loc[0] < at) {
+				at, short = loc[0], a.Short
+			}
+		}
+		if at < 0 {
+			b.WriteString(base.Render(text))
+			break
+		}
+		if at > 0 {
+			b.WriteString(base.Render(text[:at]))
+		}
+		b.WriteString(sel(goldStyle).Render(short))
+		text = text[at+len(short):]
+	}
+	return b.String()
 }

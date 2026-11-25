@@ -562,6 +562,10 @@ func TestForeverRecipeRoutes(t *testing.T) {
 	if !strings.Contains(src, want) {
 		t.Errorf("Alliance: %q, want %q", src, want)
 	}
+	// the camp label is gold on the line
+	if raw := m.sourceText(d.Items[252497]); !strings.Contains(raw, goldStyle.Render("ACA")) {
+		t.Errorf("ACA not gold: %q", raw)
+	}
 	// the footer spells the abbreviations out on a screen showing them
 	foot := ansi.Strip(m.pinFooter(m.sourceText(d.Items[252497]), "esc back"))
 	if !strings.Contains(foot, "ACA Azeroth Commerce Authority") || !strings.Contains(foot, "Favor Merchant's Favor") ||

@@ -292,4 +292,9 @@ func uniqueRingGroups() map[int]string {
 }
 
 // Abbrev is one legend entry: a short label and what it stands for.
-type Abbrev struct{ Short, Long string }
+// Marked labels (the profession camps) render highlighted on source
+// lines.
+type Abbrev struct {
+	Short, Long string
+	Marked      bool
+}
