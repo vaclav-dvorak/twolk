@@ -57,8 +57,8 @@ func (m Model) sourceText(it *db.Item) string { return m.sourceTextSel(it, rowSt
 
 // sourceTextSel is sourceText styled for a list row: sel (rowStyler)
 // lays the cursor row's highlight under every styled span, so the
-// highlighted row keeps its colors — the accent "craftable by
-// yourself" included — instead of being flattened to one style.
+// highlighted row keeps its colors — the accent "craftable"
+// included — instead of being flattened to one style.
 func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Style) string {
 	if len(it.Sources) == 0 {
 		if m.game.DB.RaidGated(it) {
@@ -79,10 +79,10 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 		text string
 		open bool
 		// tag is a suffix in the accent color — the news on the line
-		// ("craftable by yourself"); plain when the route is closed
+		// ("craftable"); plain when the route is closed
 		tag string
 		// tail follows the tag in the plain style (the recipe route
-		// after "craftable by yourself", so the label never truncates
+		// after "craftable", so the label never truncates
 		// behind a long vendor name)
 		tail string
 	}
@@ -158,7 +158,7 @@ func (m Model) sourceTextSel(it *db.Item, sel func(lipgloss.Style) lipgloss.Styl
 			if self, known := m.selfCraftable(s.Crafted); known {
 				if self {
 					part.text += " · "
-					part.tag = "craftable by yourself"
+					part.tag = "craftable"
 				} else {
 					part.text += " · buy on AH"
 				}

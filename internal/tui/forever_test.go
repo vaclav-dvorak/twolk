@@ -212,7 +212,7 @@ func TestForeverPercentStats(t *testing.T) {
 }
 
 // TestForeverCraftLabels: crafts the character can make (profession at
-// the learn level) read "craftable by yourself", every other craft "buy
+// the learn level) read "craftable", every other craft "buy
 // on AH" — except crafts that bind on pickup, which only their crafter
 // can get and so drop out of the proposals.
 func TestForeverCraftLabels(t *testing.T) {
@@ -245,7 +245,7 @@ func TestForeverCraftLabels(t *testing.T) {
 		label   string
 		allowed bool
 	}{
-		{252520, "craftable by yourself", true}, // Skulker's Leather Belt: LW 150, BoP
+		{252520, "craftable", true}, // Skulker's Leather Belt: LW 150, BoP
 		{277043, "buy on AH", true},             // Cloudy Gustwoven Spaulders: LW 175, BoE
 		{250533, "buy on AH", true},             // Hard Gold Cuirass: blacksmithing, BoE
 		{250532, "buy on AH", false},            // Crusader's Silvered Chain Helm: blacksmithing, BoP
@@ -262,7 +262,7 @@ func TestForeverCraftLabels(t *testing.T) {
 		}
 	}
 
-	// "craftable by yourself" stands out in the version's accent:
+	// "craftable" stands out in the version's accent:
 	// Forever's #00D7D7 is 256-color 44 (no TTY in tests: force it)
 	lipgloss.SetColorProfile(termenv.ANSI256)
 	t.Cleanup(func() { lipgloss.SetColorProfile(termenv.Ascii) })
@@ -558,7 +558,7 @@ func TestForeverRecipeRoutes(t *testing.T) {
 	// Totemic Leather Gloves: Leatherworking 75, sold at the camps
 	m, d := importForever(t, foreverExport) // Alliance, Leatherworking 152
 	src := ansi.Strip(m.sourceText(d.Items[252497]))
-	want := "craftable by yourself · ACA · 30 Favor"
+	want := "craftable · ACA · 30 Favor"
 	if !strings.Contains(src, want) {
 		t.Errorf("Alliance: %q, want %q", src, want)
 	}

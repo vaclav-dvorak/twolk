@@ -717,7 +717,7 @@ type Database struct {
 
 	// CraftSkills maps craft spells to the profession skill that learns
 	// them, and BoPCrafts the crafted items that bind on pickup — the
-	// data behind "craftable by yourself" vs "buy on AH". nil for
+	// data behind "craftable" vs "buy on AH". nil for
 	// versions without it (only Forever's loader fills them).
 	CraftSkills map[int]CraftSkill
 	BoPCrafts   map[int]bool

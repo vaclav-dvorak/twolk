@@ -57,7 +57,7 @@ scored yet.
 | ✝️ Priest | Shadow |
 
 Below 60, twolk proposes only what you can wear now (required level,
-armor class), marks crafts *craftable by yourself* or *buy on AH*, and
+armor class), marks crafts *craftable* or *buy on AH*, and
 leaves enchants out of the comparison (`e` in the upgrade screen
 toggles them). Tanks and healers import and show their gear but aren't
 scored yet.
