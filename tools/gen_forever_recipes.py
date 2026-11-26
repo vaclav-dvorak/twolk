@@ -26,8 +26,8 @@ takes the most convenient one):
      NPCs), and world drops (more NPCs, or objects).
   4. crafts no recipe item teaches: the trainer.
 
-Recipes none of these know stay out of the table: "source unknown" is
-honest, a guess is not.
+Recipes none of these know are emitted as RecipeUnknown — the line says
+"recipe unknown"; a guess would not be honest.
 
 Bulk upstreams only: wago.tools client CSVs at the Forever build,
 QuestieDB pinned at QUESTIE_COMMIT (GPLv3), the vendored wowsims data.
@@ -256,7 +256,10 @@ def main():
             if rt and (best is None or rt[0] < best[1][0]):
                 best = (item, rt)
         if best is None:
+            # taught by a recipe item no source places: say so on the
+            # line ("recipe unknown") rather than nothing
             unknown += 1
+            table[sp] = (sparse[min(items)]["Display_lang"], "RecipeUnknown", "", "", "", 0)
             continue
         item, (_, kind, where, horde, rep, side) = best
         table[sp] = (sparse[item]["Display_lang"], kind, where, horde, rep, side)
@@ -269,7 +272,7 @@ def main():
     out.write(f"// (build {BUILD}), QuestieDB ({QUESTIE_COMMIT[:12]}, GPLv3), the ACA snapshot in\n")
     out.write("// tools/data/forever_aca_recipes.json and the vendored wowsims data; DO NOT EDIT.\n\n")
     out.write("package db\n\n")
-    out.write(f"// foreverRecipes: {len(table)} crafts; {unknown} recipe items with no known route are left out.\n")
+    out.write(f"// foreverRecipes: {len(table)} crafts, {unknown} of them taught by a recipe item no source places.\n")
     out.write("var foreverRecipes = map[int]RecipeSource{\n")
     for sp, (name, kind, where, _, rep, _) in sorted(table.items()):
         out.write(f"\t{sp}: {{{go(name)}, {kind}, {go(where)}, {go(rep)}, 0}},\n")

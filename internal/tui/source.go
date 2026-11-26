@@ -289,6 +289,8 @@ func (m Model) recipeText(spellID int) string {
 		how, where = "recipe drop", "world"
 	case db.RecipeQuest:
 		how, where = "recipe quest", r.Where
+	case db.RecipeUnknown:
+		return " · recipe unknown"
 	}
 	if where == "" {
 		return ""

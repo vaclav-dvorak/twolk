@@ -613,6 +613,10 @@ func TestForeverRecipeRoutes(t *testing.T) {
 			}
 		}
 	}
+	// a craft whose recipe no source places says so
+	if line := ansi.Strip(m.sourceText(d.Items[250498])); !strings.Contains(line, "recipe unknown") { // Veteran's Chain Helm
+		t.Errorf("unplaced recipe: %q", line)
+	}
 	// a reputation recipe: the vendor and the standing (client data)
 	r, ok := d.RecipeFor(20848, "Alliance") // Flarecore Mantle
 	if !ok || r.Where != "Lokhtos Darkbargainer" || r.Rep != "Thorium Brotherhood — Honored" {
