@@ -624,20 +624,29 @@ func TestForeverRecipeRoutes(t *testing.T) {
 // its imported talent ranks — a mage with Precision 3/3 (+6% spell hit)
 // caps gear at 11%, one without at the raw 17%.
 func TestForeverHitTalentsDetected(t *testing.T) {
+	// a Dwarf's racial is named too
+	dwarf, _ := importForever(t, foreverExport)
+	if v := ansi.Strip(dwarf.View()); !strings.Contains(v, "Hit 0%/7% (1% racial)") {
+		t.Errorf("Dwarf header lacks the racial note")
+	}
 	mage := strings.NewReplacer(`"class":"Hunter"`, `"class":"Mage"`, `"race":"Dwarf"`, `"race":"Gnome"`,
 		`"Beast Mastery"`, `"Frost"`).Replace(foreverExport)
 	for _, c := range []struct {
 		ranks, want string
 	}{
-		{`{"135308":3}`, "Hit 0%/11%"},
+		{`{"135308":3}`, "Hit 0%/11% (6% talents)"},
 		{`{"134422":5}`, "Hit 0%/17%"},
 	} {
 		m, _ := importForever(t, strings.Replace(mage, `{"134422":5}`, c.ranks, 1))
 		if m.scorer == nil {
 			t.Fatal("no Frost Mage profile")
 		}
-		if v := ansi.Strip(m.View()); !strings.Contains(v, c.want) {
+		v := ansi.Strip(m.View())
+		if !strings.Contains(v, c.want) {
 			t.Errorf("ranks %s: header lacks %q", c.ranks, c.want)
+		}
+		if c.ranks == `{"134422":5}` && strings.Contains(v, "talents)") {
+			t.Errorf("no hit talent, yet the header names one")
 		}
 	}
 }

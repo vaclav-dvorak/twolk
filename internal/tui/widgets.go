@@ -165,7 +165,7 @@ func (m Model) viewCapsTotals(tot db.Stats) string {
 		default:
 			text = dimStyle.Render(text)
 		}
-		parts = append(parts, text)
+		parts = append(parts, text+dimStyle.Render(m.capNote(c.Stat)))
 	}
 	// the totals include the assumed food/flask (see consumes.go); say
 	// so, or a reader checks them against the character sheet and finds
@@ -220,4 +220,53 @@ func legendRe(short string) *regexp.Regexp {
 	re := regexp.MustCompile(`\b` + regexp.QuoteMeta(short) + `\b`)
 	legendRes[short] = re
 	return re
+}
+
+// capNote names what lowers a cap besides gear — " (1% racial, 6%
+// talents)" — so a personal cap reads as one, not as a wrong number. ""
+// when nothing does.
+func (m Model) capNote(st db.Stat) string {
+	if m.char == nil {
+		return ""
+	}
+	var talents float64
+	for _, t := range m.game.Rules.CapTalentsFor(m.char.Class) {
+		if t.Stat == st {
+			talents += float64(m.talentPoints(t)) * t.RatingPerPoint
+		}
+	}
+	var racial float64
+	if r := m.game.Rules.RacialHitPct(m.char.Race); r > 0 {
+		switch st {
+		case db.MeleeHit:
+			racial = r * m.game.Rules.MeleeHitRatingPerPct
+		case db.SpellHit:
+			racial = r * m.game.Rules.SpellHitRatingPerPct
+		}
+	}
+	amount := func(rating float64) string {
+		if per, ok := m.game.Rules.PercentRating[st]; ok {
+			return fmt.Sprintf("%g%%", round2(rating/per))
+		}
+		switch st {
+		case db.MeleeHit:
+			return fmt.Sprintf("%g%%", round2(rating/m.game.Rules.MeleeHitRatingPerPct))
+		case db.SpellHit:
+			return fmt.Sprintf("%g%%", round2(rating/m.game.Rules.SpellHitRatingPerPct))
+		case db.Expertise:
+			return fmt.Sprintf("%g expertise", round2(rating/m.game.Rules.RatingPerExpertise))
+		}
+		return fmt.Sprintf("%.0f", rating)
+	}
+	var parts []string
+	if racial > 0 {
+		parts = append(parts, amount(racial)+" racial")
+	}
+	if talents > 0 {
+		parts = append(parts, amount(talents)+" talents")
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " (" + strings.Join(parts, ", ") + ")"
 }
