@@ -50,6 +50,10 @@ type Rules struct {
 	// Cataclysm casters gear the full unreduced cap.
 	SpellHitDebuffPct float64
 
+	// StatLabels renames stats for the version's players (Forever's
+	// SpellPower is the game's "spell damage")
+	StatLabels map[db.Stat]string
+
 	// RacialHit maps races to the flat hit% their racial grants (it
 	// lowers the hit cap, see RacialHitPct).
 	RacialHit map[string]float64

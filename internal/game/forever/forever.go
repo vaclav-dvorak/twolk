@@ -64,7 +64,8 @@ var rules60 = &score.Rules{
 	// Artisan's Precision: +1% physical and spell hit (wowsims/forever
 	// sim/core/racials.go @ the pin). Forever's other stat racials
 	// (Human +1% crit) shift every item equally and rank nothing.
-	RacialHit: map[string]float64{"Dwarf": 1},
+	RacialHit:  map[string]float64{"Dwarf": 1},
+	StatLabels: map[db.Stat]string{db.SpellPower: "Spell Damage"},
 	PercentRating: map[db.Stat]float64{
 		db.MeleeHit:   db.ForeverHitRatingPerPct,
 		db.MeleeCrit:  db.ForeverCritRatingPerPct,
@@ -76,8 +77,10 @@ var rules60 = &score.Rules{
 	},
 	Stats: []db.Stat{
 		db.Strength, db.Agility, db.Stamina, db.Intellect, db.Spirit,
-		db.SpellPower, db.MP5, db.SpellPenetration, db.AttackPower,
-		db.RangedAttackPower, db.MeleeHit, db.MeleeCrit, db.MeleeHaste,
+		db.SpellPower, db.ArcaneDamage, db.FireDamage, db.FrostDamage,
+		db.HolyDamage, db.NatureDamage, db.ShadowDamage, db.HealingPower,
+		db.MP5, db.SpellPenetration, db.AttackPower,
+		db.RangedAttackPower, db.FeralAttackPower, db.MeleeHit, db.MeleeCrit, db.MeleeHaste,
 		db.ArmorPenetration, db.Expertise, db.Armor, db.BonusArmor,
 		db.Defense, db.Block, db.BlockValue, db.Dodge, db.Parry,
 		db.Health, db.Mana, db.ArcaneResistance, db.FireResistance,

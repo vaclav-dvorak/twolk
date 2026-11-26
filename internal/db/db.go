@@ -60,6 +60,16 @@ const (
 	ShadowResistance
 	BonusArmor
 	Mastery // Cataclysm onward; never set by WotLK data
+	// Forever splits what later versions fold into spell power and
+	// attack power; never set by WotLK/Cata data
+	HealingPower
+	ArcaneDamage
+	FireDamage
+	FrostDamage
+	HolyDamage
+	NatureDamage
+	ShadowDamage
+	FeralAttackPower
 	NumStats
 )
 
@@ -72,6 +82,8 @@ var statNames = [NumStats]string{
 	"Dodge", "Parry", "Resilience", "Health", "Arcane Resistance",
 	"Fire Resistance", "Frost Resistance", "Nature Resistance",
 	"Shadow Resistance", "Bonus Armor", "Mastery",
+	"Healing Power", "Arcane Damage", "Fire Damage", "Frost Damage",
+	"Holy Damage", "Nature Damage", "Shadow Damage", "Feral AP",
 }
 
 func (s Stat) String() string {

@@ -60,6 +60,9 @@ func (m Model) statGroups(s db.Stats) [][]string {
 // unified rating whose twin the version's data never sets renders as
 // the plain name (cata "Hit", never "Melee Hit").
 func (m Model) statLabel(st db.Stat) string {
+	if l, ok := m.game.Rules.StatLabels[st]; ok {
+		return l
+	}
 	for _, p := range ratingPairs {
 		if (st == p.a || st == p.b) && (!m.game.Rules.HasStat(p.a) || !m.game.Rules.HasStat(p.b)) {
 			return p.name
@@ -99,6 +102,9 @@ func (m Model) statLines(s db.Stats, include func(db.Stat) bool) []string {
 		}
 		if !merged {
 			label = st.String()
+			if l, ok := m.game.Rules.StatLabels[st]; ok {
+				label = l
+			}
 		}
 		if per, ok := m.game.Rules.PercentRating[st]; ok {
 			out = append(out, fmt.Sprintf("%+g%% %s", round2(v/per), label))

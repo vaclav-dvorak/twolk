@@ -98,6 +98,9 @@ var profiles = []*score.Profile{
 }
 
 func findProfile(class db.Class, tree string, _ map[int]int) *score.Profile {
+	if tree == "Feral" { // the armory may shorten the tree's name
+		tree = "Feral Combat"
+	}
 	return score.FindIn(profiles, class, tree)
 }
 

@@ -51,15 +51,17 @@ const (
 // foreverStatOrder maps WoWSims-Forever proto stat indices to canonical
 // Stats; -1 drops a stat the canonical set has no slot for. The shared
 // hit/crit/haste ratings decode into the MELEE slots, the cata
-// convention. Spell damage and healing power both land on SpellPower
-// (Forever splits them, like vanilla; a later scoring pass may need
-// them apart). School-specific damage and feral AP are dropped.
+// convention. Forever keeps vanilla's split stats apart: spell damage
+// (SpellPower), healing power, the six school damages and feral attack
+// power each get their own slot — the sim prices them differently (a
+// DPS caster gains nothing from healing, a fire mage ~0.9 of spell
+// damage from fire damage).
 var foreverStatOrder = [...]Stat{
 	Strength, Agility, Stamina, Intellect,
-	SpellPower, SpellPower, // healing power, spell damage
-	-1, -1, -1, -1, -1, -1, // arcane/fire/frost/holy/nature/shadow damage
+	HealingPower, SpellPower,
+	ArcaneDamage, FireDamage, FrostDamage, HolyDamage, NatureDamage, ShadowDamage,
 	SpellPenetration, Spirit,
-	AttackPower, RangedAttackPower, -1, // feral AP
+	AttackPower, RangedAttackPower, FeralAttackPower,
 	MeleeHit, MeleeCrit, MeleeHaste,
 	ArmorPenetration, Expertise,
 	Defense, Block, BlockValue, Dodge, Parry, Armor, BonusArmor,
@@ -69,19 +71,12 @@ var foreverStatOrder = [...]Stat{
 	BonusArmor, // armor untouched by armor modifiers
 }
 
-// foreverDecode adds one upstream stat. Healing power and spell damage
-// share SpellPower: the larger of the two wins rather than their sum,
-// so an item carrying both doesn't read as double.
+// foreverDecode adds one upstream stat.
 func foreverDecode(dst *Stats, i int, v float64) {
 	if i < 0 || i >= len(foreverStatOrder) || foreverStatOrder[i] < 0 {
 		return
 	}
-	s := foreverStatOrder[i]
-	if s == SpellPower {
-		dst[s] = max(dst[s], v)
-		return
-	}
-	dst[s] += v
+	dst[foreverStatOrder[i]] += v
 }
 
 // foreverStats decodes a positional stat array (enchants).

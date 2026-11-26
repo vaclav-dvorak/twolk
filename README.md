@@ -42,12 +42,25 @@ count. Then it:
 Other Cataclysm classes import and show their gear, but they aren't
 scored yet.
 
-**WoW: Forever** scores 🏹 hunters (Beast Mastery, Marksmanship,
-Survival) at **any level**: below 60 twolk proposes only what you can
-wear now (required level, armor class), marks crafts *craftable by
-yourself* or *buy on AH*, and leaves enchants out of the comparison
-(`e` in the upgrade screen toggles them). Other Forever classes import
-and show their gear.
+**WoW: Forever** scored specs, at **any level**:
+
+| Class | Specs |
+|---|---|
+| 🛡️ Warrior | Arms · Fury |
+| 🐻 Druid | Feral (cat) · Balance |
+| 🔮 Mage | Arcane · Fire · Frost |
+| 💀 Warlock | Affliction · Demonology · Destruction |
+| ⚔️ Paladin | Retribution |
+| 🏹 Hunter | Beast Mastery · Marksmanship · Survival |
+| 🗡️ Rogue | Assassination · Combat · Subtlety |
+| ⚡ Shaman | Enhancement · Elemental |
+| ✝️ Priest | Shadow |
+
+Below 60, twolk proposes only what you can wear now (required level,
+armor class), marks crafts *craftable by yourself* or *buy on AH*, and
+leaves enchants out of the comparison (`e` in the upgrade screen
+toggles them). Tanks and healers import and show their gear but aren't
+scored yet.
 
 🗓️ **Raid phases** for the upgrade filter:
 - **WotLK:** Naxx (T7), Ulduar (T8), ToC (T9), ICC (T10), Ruby Sanctum.
@@ -165,8 +178,8 @@ Character data stays on your machine.
   trinket procs and tier bonuses were checked by running the WoWSims
   cata simulator. Thank you to the WoWSims team.
 - **[wowsims/forever](https://github.com/wowsims/forever)** (MIT)
-  supplies the World of Warcraft: Forever item database; Forever hunter
-  stat weights were measured by running its simulator.
+  supplies the World of Warcraft: Forever item database; every Forever
+  stat weight was measured by running its simulator.
 - **[QuestieDB](https://github.com/Questie/QuestieDB)** supplies which
   Forever items drop in the open world and where Forever recipes come
   from (used under GPLv3).
