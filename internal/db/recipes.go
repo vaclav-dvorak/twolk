@@ -48,3 +48,17 @@ func (d *Database) RecipeFor(spellID int, faction string) (RecipeSource, bool) {
 	}
 	return r, ok
 }
+
+// RecipeLearnable reports whether a character of the faction can learn
+// the craft's recipe at all (false for the other side's reputation
+// recipes).
+func (d *Database) RecipeLearnable(spellID int, faction string) bool {
+	side := d.Rules.RecipeSides[spellID]
+	switch faction {
+	case "Alliance":
+		return side != 2
+	case "Horde":
+		return side != 1
+	}
+	return true
+}

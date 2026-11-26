@@ -337,6 +337,9 @@ func (m Model) selfCraftable(c *db.CraftedSource) (self, known bool) {
 	if m.game.DB.CraftSkills == nil || m.char == nil {
 		return false, false
 	}
+	if !m.game.DB.RecipeLearnable(c.SpellID, m.char.Faction) {
+		return false, true // the other side's reputation recipe
+	}
 	need, ok := m.game.DB.CraftSkills[c.SpellID]
 	if !ok {
 		return false, true // no learn level: assume a crafter's job

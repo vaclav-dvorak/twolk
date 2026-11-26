@@ -71,6 +71,10 @@ type RuleSet struct {
 	// where the two sides buy it from different vendors (Forever's
 	// Azeroth Commerce Authority vs Durotar Supply and Logistics)
 	RecipesHorde map[int]string
+	// RecipeSides is the only side (1 Alliance, 2 Horde) that can learn
+	// a craft's recipe — reputation recipes of a faction the other side
+	// can never earn; absent = both sides
+	RecipeSides map[int]int
 	// Legend spells out the abbreviations source lines use ("ACA");
 	// screens showing one list it in their footer
 	Legend []Abbrev

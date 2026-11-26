@@ -6,6 +6,9 @@
   foreverRecipesHorde  craft spell -> the Horde side's Where, only where
                        it differs (ACA vs Durotar Supply and Logistics,
                        side-locked city vendors)
+  foreverRecipeSides   craft spell -> the only side that can learn it
+                       (1 Alliance, 2 Horde): reputation recipes of a
+                       faction the other side can never earn
 
 Routes, best first per craft (a craft taught by several recipe items
 takes the most convenient one):
@@ -59,6 +62,9 @@ UA = {"User-Agent": "twolk-gen-forever-recipes/1.0"}
 
 ITEM_SPELLTRIGGER_LEARN = 6
 MAX_NAMED = 3
+HATED_CAP = -42000
+ALLIANCE_RACES = (1 << 0) | (1 << 2) | (1 << 3) | (1 << 6)  # human, dwarf, night elf, gnome
+HORDE_RACES = (1 << 1) | (1 << 4) | (1 << 5) | (1 << 7)  # orc, undead, tauren, troll
 RANKS = {3: "Neutral", 4: "Friendly", 5: "Honored", 6: "Revered", 7: "Exalted"}
 # the camps render abbreviated; the screen's legend spells them out
 # (db.ForeverRules().Legend)
@@ -130,6 +136,26 @@ def aca_snapshot(path):
     print(f"{len(out)} ACA recipes -> {ACA}", file=sys.stderr)
 
 
+def locked_sides(rows):
+    """faction id -> the side (1 Alliance, 2 Horde) that alone can earn
+    it: the client caps the other side's races at Hated (Forever's own
+    Kirin Tor is Alliance-only, its Earthen Ring Horde-only)."""
+    out = {}
+    for r in rows:
+        capped = set()
+        for i in range(4):
+            mask = int(r[f"ReputationRaceMasks{i}_0"]) & 0xFFFFFFFF
+            if not mask or int(r[f"ReputationMax_{i}"]) != HATED_CAP:
+                continue
+            if mask & ALLIANCE_RACES and not mask & HORDE_RACES:
+                capped.add(1)
+            elif mask & HORDE_RACES and not mask & ALLIANCE_RACES:
+                capped.add(2)
+        if len(capped) == 1:
+            out[int(r["ID"])] = 3 - capped.pop()
+    return out
+
+
 def crafted_spells():
     spells = set()
     for name in ("forever-db.json.gz", "forever-leftover-db.json.gz"):
@@ -150,7 +176,9 @@ def main():
     crafts, zones = crafted_spells()
     sparse = {int(r["ID"]): r for r in wago("ItemSparse")}
     effects = {int(r["ID"]): r for r in wago("ItemEffect")}
-    factions = {int(r["ID"]): r["Name_lang"] for r in wago("Faction")}
+    faction_rows = wago("Faction")
+    factions = {int(r["ID"]): r["Name_lang"] for r in faction_rows}
+    only = locked_sides(faction_rows)
     trainable = {int(r["Spell"]) for r in wago("SkillLineAbility")}
     teach = {}
     for x in wago("ItemXItemEffect"):
@@ -175,26 +203,33 @@ def main():
         return " / ".join(names[:MAX_NAMED]) + (f" +{len(names) - MAX_NAMED}" if len(names) > MAX_NAMED else "")
 
     def route(item):
-        """(priority, kind, where, horde where, rep) for one recipe item; None unknown"""
+        """(priority, kind, where, horde where, rep, side) for one recipe
+        item; None unknown. side is the only side that can learn it, 0
+        for both."""
         r = sparse[item]
         if item in aca:
             cost = f" · {aca[item]['cost']} Favor"
-            return 0, "RecipeVendor", ALLIANCE_CAMP + cost, HORDE_CAMP + cost, ""
+            return 0, "RecipeVendor", ALLIANCE_CAMP + cost, HORDE_CAMP + cost, "", 0
         q = qitems.get(item)
         vendors = ids(field(q, ITEM_VENDORS)) if q else []
         fid = int(r["MinFactionID"])
         if fid:
             rep = f"{factions.get(fid, f'faction {fid}')} — {RANKS.get(int(r['MinReputation']), 'Neutral')}"
-            a, h = npc_names(vendors, "A"), npc_names(vendors, "H")
-            return 1, "RecipeVendor", named(a) or "quartermaster", named(h) or "quartermaster", rep
+            a, h = named(npc_names(vendors, "A")) or "quartermaster", named(npc_names(vendors, "H")) or "quartermaster"
+            side = only.get(fid, 0)
+            if side == 1:
+                h = "Alliance only"
+            elif side == 2:
+                a = "Horde only"
+            return 1, "RecipeVendor", a, h, rep, side
         if not q:
             return None
         if vendors:
-            return 2, "RecipeVendor", named(npc_names(vendors, "A")), named(npc_names(vendors, "H")), ""
+            return 2, "RecipeVendor", named(npc_names(vendors, "A")), named(npc_names(vendors, "H")), "", 0
         quests = [unquote(qquests[i][QUEST_NAME]) for i in ids(field(q, ITEM_QUEST_REWARDS)) if i in qquests]
         if quests:
             w = named(sorted(set(quests)))
-            return 3, "RecipeQuest", w, w, ""
+            return 3, "RecipeQuest", w, w, "", 0
         npcs = [n for n in ids(field(q, ITEM_NPC_DROPS)) if n in qnpcs]
         objects = ids(field(q, ITEM_OBJECT_DROPS))
         if npcs and len(npcs) <= 3 and not objects:
@@ -202,9 +237,9 @@ def main():
             zs = sorted({zones[int(field(qnpcs[n], NPC_ZONE))] for n in npcs
                          if field(qnpcs[n], NPC_ZONE).isdigit() and int(field(qnpcs[n], NPC_ZONE)) in zones})
             w = named(names) + (" · " + " / ".join(zs) if zs else "")
-            return 4, "RecipeDrop", w, w, ""
+            return 4, "RecipeDrop", w, w, "", 0
         if npcs or objects:
-            return 5, "RecipeWorldDrop", "", "", ""
+            return 5, "RecipeWorldDrop", "", "", "", 0
         return None
 
     table, unknown = {}, 0
@@ -212,7 +247,7 @@ def main():
         items = teach.get(sp)
         if not items:
             if sp in trainable:
-                table[sp] = ("", "RecipeTrainer", "", "", "")
+                table[sp] = ("", "RecipeTrainer", "", "", "", 0)
             continue
         best = None
         for item in sorted(items):
@@ -222,8 +257,8 @@ def main():
         if best is None:
             unknown += 1
             continue
-        item, (_, kind, where, horde, rep) = best
-        table[sp] = (sparse[item]["Display_lang"], kind, where, horde, rep)
+        item, (_, kind, where, horde, rep, side) = best
+        table[sp] = (sparse[item]["Display_lang"], kind, where, horde, rep, side)
 
     def go(s):
         return json.dumps(s, ensure_ascii=False)
@@ -235,14 +270,20 @@ def main():
     out.write("package db\n\n")
     out.write(f"// foreverRecipes: {len(table)} crafts; {unknown} recipe items with no known route are left out.\n")
     out.write("var foreverRecipes = map[int]RecipeSource{\n")
-    for sp, (name, kind, where, _, rep) in sorted(table.items()):
+    for sp, (name, kind, where, _, rep, _) in sorted(table.items()):
         out.write(f"\t{sp}: {{{go(name)}, {kind}, {go(where)}, {go(rep)}, 0}},\n")
     out.write("}\n\n")
     out.write("// foreverRecipesHorde: the Horde side's Where where it differs.\n")
     out.write("var foreverRecipesHorde = map[int]string{\n")
-    for sp, (_, _, where, horde, _) in sorted(table.items()):
+    for sp, (_, _, where, horde, _, _) in sorted(table.items()):
         if horde != where:
             out.write(f"\t{sp}: {go(horde)},\n")
+    out.write("}\n\n")
+    out.write("// foreverRecipeSides: the only side that can learn the recipe (1 Alliance, 2 Horde).\n")
+    out.write("var foreverRecipeSides = map[int]int{\n")
+    for sp, v in sorted(table.items()):
+        if v[5]:
+            out.write(f"\t{sp}: {v[5]},\n")
     out.write("}\n")
     kinds = {}
     for v in table.values():

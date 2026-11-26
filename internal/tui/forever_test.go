@@ -581,6 +581,28 @@ func TestForeverRecipeRoutes(t *testing.T) {
 	if !strings.Contains(src, "DSL · 30 Favor") || strings.Contains(src, "ACA") {
 		t.Errorf("Horde: %q, want the Durotar camp", src)
 	}
+	// Forever's own Kirin Tor is Alliance-only and its Earthen Ring
+	// Horde-only (client race masks): the other side can't learn the
+	// recipe, whatever its skill
+	const azure, cloudy = 1301537, 1301529 // Gustwoven Spaulders crafts
+	for _, c := range []struct {
+		spell         int
+		faction, want string
+	}{
+		{azure, "Alliance", "quartermaster (Kirin Tor — Friendly)"},
+		{cloudy, "Alliance", "Horde only (Earthen Ring — Friendly)"},
+		{azure, "Horde", "Alliance only (Kirin Tor — Friendly)"},
+		{cloudy, "Horde", "quartermaster (Earthen Ring — Friendly)"},
+	} {
+		r, ok := d.RecipeFor(c.spell, c.faction)
+		if !ok || r.Where+" ("+r.Rep+")" != c.want {
+			t.Errorf("%d for %s: %+v, want %q", c.spell, c.faction, r, c.want)
+		}
+		learnable := strings.HasPrefix(c.want, "quartermaster")
+		if d.RecipeLearnable(c.spell, c.faction) != learnable {
+			t.Errorf("%d learnable by %s = %v, want %v", c.spell, c.faction, !learnable, learnable)
+		}
+	}
 	// a reputation recipe: the vendor and the standing (client data)
 	r, ok := d.RecipeFor(20848, "Alliance") // Flarecore Mantle
 	if !ok || r.Where != "Lokhtos Darkbargainer" || r.Rep != "Thorium Brotherhood — Honored" {

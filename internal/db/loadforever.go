@@ -331,6 +331,7 @@ func ForeverRules() RuleSet {
 		PvPItems:     map[int]bool{},
 		Recipes:      foreverRecipes,
 		RecipesHorde: foreverRecipesHorde,
+		RecipeSides:  foreverRecipeSides,
 		Legend: []Abbrev{
 			{"ACA", "Azeroth Commerce Authority", true},
 			{"DSL", "Durotar Supply and Logistics", true},
