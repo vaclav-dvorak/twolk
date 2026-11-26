@@ -2,10 +2,12 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/vaclav-dvorak/twolk/internal/db"
 	"github.com/vaclav-dvorak/twolk/internal/score"
 )
 
@@ -68,9 +70,30 @@ func (m *Model) recomputeTips() {
 	m.tips.enchItems, m.tips.enchGain = len(plan.Enchants), m.scorer.EnchantGain(ws, plan.Enchants)
 	m.tips.refItems, m.tips.refGain = len(plan.Reforges), m.scorer.ReforgeGain(ws, plan.Reforges)
 	m.tips.sockets = m.scorer.SocketTips(ws)
+	// each row is ranked on its own, so two rows (both rings, both
+	// trinkets) can top out on the same unique-equipped item: serve the
+	// rows by their best gain and hand a unique item to one row only,
+	// the next row taking its best remaining pick
+	lists := make([][]score.Upgrade, len(ws))
+	var order []int
 	for i := range ws {
-		if ups := m.scorer.UpgradesWorn(ws, i, 1, m.allowItem); len(ups) > 0 {
-			m.tips.items = append(m.tips.items, itemHint{rowIdx: i, up: ups[0]})
+		if lists[i] = m.scorer.UpgradesWorn(ws, i, 8, m.allowItem); len(lists[i]) > 0 {
+			order = append(order, i)
+		}
+	}
+	sort.SliceStable(order, func(a, b int) bool { return lists[order[a]][0].Delta > lists[order[b]][0].Delta })
+	claimed := map[string]bool{}
+	for _, i := range order {
+		for _, up := range lists[i] {
+			key := m.uniqueKey(up.Item)
+			if key != "" && claimed[key] {
+				continue
+			}
+			if key != "" {
+				claimed[key] = true
+			}
+			m.tips.items = append(m.tips.items, itemHint{rowIdx: i, up: up})
+			break
 		}
 	}
 	// keep the FULL list (one hint per upgradeable slot): the tips pane
@@ -205,4 +228,16 @@ func (m Model) viewTips(budget int) string {
 	}
 	body := titleStyle.Render("Quick tips") + "\n" + strings.Join(lines, "\n")
 	return detailStyle.Width(max(m.width-2, 40)).Render(body)
+}
+
+// uniqueKey names what an item's unique-equip limit counts against: its
+// unique group, or the item itself; "" when it may be worn twice.
+func (m Model) uniqueKey(it *db.Item) string {
+	if g := m.game.DB.UniqueGroup(it.ID); g != "" {
+		return "group:" + g
+	}
+	if it.Unique {
+		return fmt.Sprint("item:", it.ID)
+	}
+	return ""
 }

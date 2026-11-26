@@ -245,10 +245,10 @@ func TestForeverCraftLabels(t *testing.T) {
 		label   string
 		allowed bool
 	}{
-		{252520, "craftable", true}, // Skulker's Leather Belt: LW 150, BoP
-		{277043, "buy on AH", true},             // Cloudy Gustwoven Spaulders: LW 175, BoE
-		{250533, "buy on AH", true},             // Hard Gold Cuirass: blacksmithing, BoE
-		{250532, "buy on AH", false},            // Crusader's Silvered Chain Helm: blacksmithing, BoP
+		{252520, "craftable", true},  // Skulker's Leather Belt: LW 150, BoP
+		{277043, "buy on AH", true},  // Cloudy Gustwoven Spaulders: LW 175, BoE
+		{250533, "buy on AH", true},  // Hard Gold Cuirass: blacksmithing, BoE
+		{250532, "buy on AH", false}, // Crusader's Silvered Chain Helm: blacksmithing, BoP
 	} {
 		it := d.Items[c.id]
 		if it == nil {
@@ -669,4 +669,32 @@ func TestCloaksForEveryArmorClass(t *testing.T) {
 		}
 	}
 	t.Fatal("no back row")
+}
+
+// TestTipsNoDuplicateUnique: both empty ring rows of the level-32
+// hunter top out on the unique-equipped Quick Strike Ring; the tips
+// hand it to one row and the other gets its next pick.
+func TestTipsNoDuplicateUnique(t *testing.T) {
+	m, _ := importForever(t, foreverExport)
+	m.recomputeTips()
+	seen := map[int]int{}
+	for _, h := range m.tips.items {
+		if m.uniqueKey(h.up.Item) != "" {
+			seen[h.up.Item.ID]++
+		}
+	}
+	for id, n := range seen {
+		if n > 1 {
+			t.Errorf("unique item %d suggested %d times", id, n)
+		}
+	}
+	rings := 0
+	for _, h := range m.tips.items {
+		if m.gearRows()[h.rowIdx].item.Slot == db.SlotFinger {
+			rings++
+		}
+	}
+	if rings != 2 {
+		t.Errorf("%d ring tips, want one per ring row", rings)
+	}
 }
