@@ -217,10 +217,11 @@ def main():
             rep = f"{factions.get(fid, f'faction {fid}')} — {RANKS.get(int(r['MinReputation']), 'Neutral')}"
             a, h = named(npc_names(vendors, "A")) or "quartermaster", named(npc_names(vendors, "H")) or "quartermaster"
             side = only.get(fid, 0)
+            # the other side never hears of it: no route to show
             if side == 1:
-                h = "Alliance only"
+                h = ""
             elif side == 2:
-                a = "Horde only"
+                a = ""
             return 1, "RecipeVendor", a, h, rep, side
         if not q:
             return None

@@ -590,8 +590,8 @@ func TestForeverRecipeRoutes(t *testing.T) {
 		faction, want string
 	}{
 		{azure, "Alliance", "quartermaster (Kirin Tor — Friendly)"},
-		{cloudy, "Alliance", "Horde only (Earthen Ring — Friendly)"},
-		{azure, "Horde", "Alliance only (Kirin Tor — Friendly)"},
+		{cloudy, "Alliance", " (Earthen Ring — Friendly)"}, // no route text for the other side
+		{azure, "Horde", " (Kirin Tor — Friendly)"},
 		{cloudy, "Horde", "quartermaster (Earthen Ring — Friendly)"},
 	} {
 		r, ok := d.RecipeFor(c.spell, c.faction)
@@ -601,6 +601,16 @@ func TestForeverRecipeRoutes(t *testing.T) {
 		learnable := strings.HasPrefix(c.want, "quartermaster")
 		if d.RecipeLearnable(c.spell, c.faction) != learnable {
 			t.Errorf("%d learnable by %s = %v, want %v", c.spell, c.faction, !learnable, learnable)
+		}
+	}
+	// on the line, the other side's recipe says nothing at all
+	for _, it := range d.Items {
+		for _, src := range it.Sources {
+			if src.Crafted != nil && src.Crafted.SpellID == azure { // Alliance-only; m is Horde here
+				if line := ansi.Strip(m.sourceText(it)); strings.Contains(line, "only") || strings.Contains(line, "Kirin") {
+					t.Errorf("Alliance-only recipe shown to a Horde character: %q", line)
+				}
+			}
 		}
 	}
 	// a reputation recipe: the vendor and the standing (client data)

@@ -274,7 +274,7 @@ func (m Model) recipeText(spellID int) string {
 		faction = m.char.Faction
 	}
 	r, ok := m.game.DB.RecipeFor(spellID, faction)
-	if !ok {
+	if !ok || !m.game.DB.RecipeLearnable(spellID, faction) {
 		return ""
 	}
 	var how, where string
