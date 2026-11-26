@@ -650,3 +650,19 @@ func TestForeverHitTalentsDetected(t *testing.T) {
 		}
 	}
 }
+
+// TestCloaksForEveryArmorClass: the Forever (and Cata) data label
+// cloaks cloth; a leather-wearing hunter still gets cloak upgrades.
+func TestCloaksForEveryArmorClass(t *testing.T) {
+	m, _ := importForever(t, foreverExport)
+	ws := wornOf(m.gearRows())
+	for i, r := range m.gearRows() {
+		if r.item.Slot == db.SlotBack {
+			if ups := m.scorer.UpgradesWorn(ws, i, 5, m.allowItem); len(ups) == 0 {
+				t.Error("no cloak upgrade for an empty back slot")
+			}
+			return
+		}
+	}
+	t.Fatal("no back row")
+}

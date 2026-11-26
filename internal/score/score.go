@@ -1735,7 +1735,10 @@ func (s *Scorer) groupWornElsewhere(set []*db.Item, i int, group string) bool {
 
 // typeAllowed applies the profile's armor/weapon type proposal filters.
 func (s *Scorer) typeAllowed(it *db.Item) bool {
-	if s.prof.ArmorType != db.ArmorAny && it.ArmorType != db.ArmorAny && it.ArmorType != s.prof.ArmorType {
+	// armor class gates the armor slots only: every class wears a
+	// cloak, and the Cata and Forever data label cloaks cloth
+	if it.Slot != db.SlotBack && s.prof.ArmorType != db.ArmorAny &&
+		it.ArmorType != db.ArmorAny && it.ArmorType != s.prof.ArmorType {
 		return false
 	}
 	// shields and held frills bypass the weapon-type list: they are
