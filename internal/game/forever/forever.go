@@ -61,6 +61,7 @@ var rules60 = &score.Rules{
 	RatingPerExpertise:   db.ForeverExpertiseRatingPerPct,
 	CritRatingPerPct:     db.ForeverCritRatingPerPct,
 	TreeOrder:            score.ClassicTreeOrder,
+	CapTalents:           capTalents,
 	// Artisan's Precision: +1% physical and spell hit (wowsims/forever
 	// sim/core/racials.go @ the pin). Forever's other stat racials
 	// (Human +1% crit) shift every item equally and rank nothing.

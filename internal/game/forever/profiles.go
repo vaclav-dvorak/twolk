@@ -31,8 +31,8 @@ import (
 // Hit is flat below the cap and near zero above it in every tree; the
 // cap is 8% total. Swept at 20k iterations in 1% steps around the
 // preset's 5% gear hit: BM and MM fall off between +3% and +4% (8%),
-// SV right at +0% — Surefooted's 3% supplies the rest, so the SV cap
-// below assumes the talent is taken (3/3).
+// SV right at +0% — Surefooted's 3% supplies the rest; the cap is the
+// raw 8% and the character's detected Surefooted rank lowers it.
 //
 // The weights are level-60 weights, applied at every level: leveling
 // characters get "what fits now" ranked by endgame value.
@@ -94,7 +94,7 @@ func hunterProfile(tree string, weights db.Stats, hitPct, mhDPS, rangedDPS, epPe
 var profiles = []*score.Profile{
 	hunterProfile("Beast Mastery", bmWeights, 8, 0, 8.906, bmEPPerDPS),
 	hunterProfile("Marksmanship", mmWeights, 8, 7.148, 8.309, mmEPPerDPS),
-	hunterProfile("Survival", svWeights, 5, 14.006, 8.500, svEPPerDPS),
+	hunterProfile("Survival", svWeights, 8, 14.006, 8.500, svEPPerDPS),
 }
 
 func findProfile(class db.Class, tree string, _ map[int]int) *score.Profile {
